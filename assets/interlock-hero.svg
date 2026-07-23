@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+  <title id="title">Interlock — code-defined authority for a protected effect</title>
+  <desc id="desc">A technical instrument-style banner showing the Interlock authority mark and the line The agent proposes. The broker publishes.</desc>
+  <rect width="1200" height="420" fill="#EEE9DC"/>
+  <path d="M48 0v420M0 70h1200M0 350h1200M724 70v280" fill="none" stroke="#182224" stroke-width="2"/>
+  <path d="M74 106h594M74 314h594" fill="none" stroke="#A9AAA2"/>
+  <g transform="translate(96 130) scale(2.65)">
+    <rect x="8" y="14" width="9" height="37" fill="#182224"/>
+    <rect x="8" y="14" width="24" height="9" fill="#182224"/>
+    <rect x="8" y="42" width="24" height="9" fill="#182224"/>
+    <rect x="47" y="14" width="9" height="37" fill="#182224"/>
+    <rect x="32" y="23" width="24" height="9" fill="#182224"/>
+    <rect x="32" y="33" width="24" height="9" fill="#182224"/>
+    <rect x="32" y="23" width="8" height="9" fill="#E4572E"/>
+    <rect x="32" y="33" width="8" height="9" fill="#E4572E"/>
+  </g>
+  <text x="292" y="232" fill="#182224" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="74" font-weight="700" letter-spacing="-4">interlock</text>
+  <text x="76" y="42" fill="#182224" font-family="monospace" font-size="11" font-weight="700" letter-spacing="2">CODE-DEFINED EFFECT POLICY + BROKERED AUTHORITY</text>
+  <text x="1124" y="42" text-anchor="end" fill="#394446" font-family="monospace" font-size="11" font-weight="700">ILK–ID / 01</text>
+  <text x="770" y="150" fill="#E4572E" font-family="monospace" font-size="11" font-weight="700" letter-spacing="2">AUTHORITY / NOT INTERCEPTION</text>
+  <text x="770" y="208" fill="#182224" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="38" font-weight="700">The agent proposes.</text>
+  <text x="770" y="252" fill="#182224" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="38" font-weight="700">The broker publishes.</text>
+  <text x="770" y="300" fill="#394446" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="16">One protected effect, brokered by verified authority.</text>
+  <text x="76" y="388" fill="#394446" font-family="monospace" font-size="10" font-weight="700" letter-spacing="1.4">GO AUTHORS / CANONICAL IR DECIDES</text>
+  <text x="1124" y="388" text-anchor="end" fill="#394446" font-family="monospace" font-size="10" font-weight="700" letter-spacing="1.4">OPERATORSTACK / INTERLOCK</text>
+</svg>

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="500" viewBox="0 0 1200 500" role="img" aria-labelledby="title desc">
+  <title id="title">Interlock system boundary</title>
+  <desc id="desc">An isolated agent proposes a staged candidate; Interlock compiles policy, verifies evidence, and its broker is the sole authority that lands the protected artifact.</desc>
+  <rect width="1200" height="500" fill="#F8F5EC"/>
+  <rect x="1" y="1" width="1198" height="498" fill="none" stroke="#182224" stroke-width="2"/>
+  <text x="40" y="43" fill="#182224" font-family="monospace" font-size="12" font-weight="700" letter-spacing="2">STRICT MODE / PROPOSE → VERIFY → PUBLISH</text>
+
+  <g font-family="Trebuchet MS, Segoe UI, sans-serif">
+    <rect x="54" y="96" width="212" height="276" fill="#EEE9DC" stroke="#182224" stroke-width="2"/>
+    <text x="82" y="130" fill="#E4572E" font-family="monospace" font-size="11" font-weight="700" letter-spacing="2">AGENT / ISOLATED</text>
+    <text x="82" y="182" fill="#182224" font-size="24" font-weight="700">Reason</text>
+    <path d="M82 200h156" stroke="#A9AAA2"/>
+    <text x="82" y="246" fill="#182224" font-size="24" font-weight="700">Edit + stage</text>
+    <path d="M82 264h156" stroke="#A9AAA2"/>
+    <text x="82" y="310" fill="#182224" font-size="24" font-weight="700">Propose</text>
+    <text x="82" y="346" fill="#394446" font-size="14">no artifact authority</text>
+
+    <rect x="362" y="96" width="294" height="276" fill="#182224"/>
+    <g transform="translate(378 122)">
+      <rect x="8" y="14" width="9" height="37" fill="#FFFDF7"/>
+      <rect x="8" y="14" width="24" height="9" fill="#FFFDF7"/>
+      <rect x="8" y="42" width="24" height="9" fill="#FFFDF7"/>
+      <rect x="47" y="14" width="9" height="37" fill="#FFFDF7"/>
+      <rect x="32" y="23" width="24" height="9" fill="#FFFDF7"/>
+      <rect x="32" y="33" width="24" height="9" fill="#FFFDF7"/>
+      <rect x="32" y="23" width="8" height="9" fill="#E4572E"/>
+      <rect x="32" y="33" width="8" height="9" fill="#E4572E"/>
+    </g>
+    <text x="456" y="164" fill="#FFFDF7" font-size="32" font-weight="700">Interlock</text>
+    <text x="394" y="214" fill="#E4572E" font-family="monospace" font-size="11" font-weight="700" letter-spacing="1.4">COMPILE + DECIDE + BROKER</text>
+    <text x="394" y="250" fill="#FFFDF7" font-size="17">canonical policy IR</text>
+    <text x="394" y="280" fill="#FFFDF7" font-size="17">pure decision engine</text>
+    <text x="394" y="310" fill="#FFFDF7" font-size="17">exclusive-publish broker</text>
+    <text x="394" y="344" fill="#A9AAA2" font-size="13">fails closed on mismatch</text>
+
+    <rect x="752" y="96" width="394" height="118" fill="#EEE9DC" stroke="#182224" stroke-width="2"/>
+    <text x="782" y="128" fill="#E4572E" font-family="monospace" font-size="11" font-weight="700" letter-spacing="2">STAGED CANDIDATE / WORKSPACE-WRITABLE</text>
+    <text x="782" y="166" fill="#182224" font-size="21" font-weight="700">Agent writes · verifier checks</text>
+    <text x="782" y="192" fill="#394446" font-size="14">hashed bytes · never the protected path</text>
+
+    <rect x="752" y="254" width="394" height="118" fill="#EEE9DC" stroke="#182224" stroke-width="2"/>
+    <text x="782" y="286" fill="#E4572E" font-family="monospace" font-size="11" font-weight="700" letter-spacing="2">PROTECTED ARTIFACT / BROKER-ONLY</text>
+    <text x="782" y="324" fill="#182224" font-size="21" font-weight="700">Landed only by the broker</text>
+    <text x="782" y="350" fill="#394446" font-size="14">on correlated evidence the agent cannot forge</text>
+  </g>
+
+  <path d="M266 156h96" stroke="#E4572E" stroke-width="4"/>
+  <path d="m350 148 12 8-12 8" fill="none" stroke="#E4572E" stroke-width="4"/>
+  <text x="288" y="140" fill="#394446" font-family="monospace" font-size="10">PROPOSE</text>
+
+  <path d="M656 156h96" stroke="#E4572E" stroke-width="4"/>
+  <path d="m740 148 12 8-12 8" fill="none" stroke="#E4572E" stroke-width="4"/>
+  <text x="682" y="140" fill="#394446" font-family="monospace" font-size="10">VERIFY</text>
+
+  <path d="M656 312h96" stroke="#E4572E" stroke-width="4"/>
+  <path d="m740 304 12 8-12 8" fill="none" stroke="#E4572E" stroke-width="4"/>
+  <path d="M752 350H656" stroke="#182224" stroke-width="3" stroke-dasharray="7 6"/>
+  <path d="m668 342-12 8 12 8" fill="none" stroke="#182224" stroke-width="3"/>
+  <text x="680" y="296" fill="#394446" font-family="monospace" font-size="10">PUBLISH</text>
+  <text x="680" y="374" fill="#394446" font-family="monospace" font-size="10">RECEIPT</text>
+
+  <text x="54" y="438" fill="#182224" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="22" font-weight="700">Only the broker can land the protected artifact — and only on evidence it verifies.</text>
+  <text x="54" y="467" fill="#394446" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="15">Remove isolation or the broker and Interlock makes no claim about child-process writes.</text>
+</svg>

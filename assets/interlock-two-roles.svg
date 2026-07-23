@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="470" viewBox="0 0 1200 470" role="img" aria-labelledby="title desc">
+  <title id="title">Interlock actors and authority</title>
+  <desc id="desc">An agent may write its workspace but is denied the protected artifact, while a broker holds the exclusive authority to publish that artifact and returns a receipt.</desc>
+  <rect width="1200" height="470" fill="#EEE9DC"/>
+  <path d="M600 0v470M0 70h1200" stroke="#182224" stroke-width="2"/>
+  <text x="40" y="43" fill="#182224" font-family="monospace" font-size="12" font-weight="700" letter-spacing="2">TWO ACTORS / ONE HOLDS PUBLISH AUTHORITY</text>
+
+  <g font-family="Trebuchet MS, Segoe UI, sans-serif">
+    <text x="48" y="114" fill="#E4572E" font-family="monospace" font-size="11" font-weight="700" letter-spacing="2">01 / AGENT</text>
+    <text x="48" y="158" fill="#182224" font-size="34" font-weight="700">Workspace author</text>
+    <text x="48" y="190" fill="#394446" font-size="15">Writes staging freely. Denied the protected path.</text>
+    <rect x="48" y="228" width="504" height="142" fill="#182224"/>
+    <text x="72" y="262" fill="#E4572E" font-family="monospace" font-size="12">effect.request</text>
+    <text x="72" y="296" fill="#FFFDF7" font-family="monospace" font-size="14">actor          agent</text>
+    <text x="72" y="326" fill="#FFFDF7" font-family="monospace" font-size="14">operation      filesystem.write</text>
+    <text x="72" y="356" fill="#A9AAA2" font-family="monospace" font-size="12">target         repo://out/result.json</text>
+    <path d="M400 294h96" stroke="#E4572E" stroke-width="4"/>
+    <path d="M512 282v24" stroke="#E4572E" stroke-width="4"/>
+    <text x="405" y="279" fill="#A9AAA2" font-family="monospace" font-size="10">DENY</text>
+
+    <text x="648" y="114" fill="#E4572E" font-family="monospace" font-size="11" font-weight="700" letter-spacing="2">02 / BROKER</text>
+    <text x="648" y="158" fill="#182224" font-size="34" font-weight="700">Exclusive publisher</text>
+    <text x="648" y="190" fill="#394446" font-size="15">Publishes one artifact on correlated evidence.</text>
+    <rect x="648" y="228" width="504" height="142" fill="#182224"/>
+    <text x="672" y="262" fill="#E4572E" font-family="monospace" font-size="12">artifact.publish</text>
+    <text x="672" y="296" fill="#FFFDF7" font-family="monospace" font-size="14">actor          broker</text>
+    <text x="672" y="326" fill="#FFFDF7" font-family="monospace" font-size="14">staged         sha256:9f3c…</text>
+    <text x="672" y="356" fill="#A9AAA2" font-family="monospace" font-size="12">target         repo://out/result.json</text>
+    <path d="M1000 280h112" stroke="#E4572E" stroke-width="4"/>
+    <path d="m1100 272 12 8-12 8" fill="none" stroke="#E4572E" stroke-width="4"/>
+    <path d="M1112 320h-112" stroke="#FFFDF7" stroke-width="3" stroke-dasharray="7 6"/>
+    <path d="m1012 312-12 8 12 8" fill="none" stroke="#FFFDF7" stroke-width="3"/>
+    <text x="1006" y="279" fill="#A9AAA2" font-family="monospace" font-size="10">PUBLISH</text>
+    <text x="1006" y="344" fill="#A9AAA2" font-family="monospace" font-size="10">RECEIPT</text>
+  </g>
+
+  <text x="48" y="420" fill="#182224" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="20" font-weight="700">Agent: Request → Denied</text>
+  <text x="648" y="420" fill="#182224" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="20" font-weight="700">Broker: Request → Publish → Receipt</text>
+</svg>
