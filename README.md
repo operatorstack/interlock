@@ -28,7 +28,7 @@ Interlock decides. The broker performs. The agent never holds the authority.
 
 The fastest way to understand Interlock is to watch an agent's publish get denied
 and a verified publisher's succeed. Every command below is exactly what
-[`scripts/validate.sh`](../scripts/validate.sh) exercises on a clean build, so the
+[`scripts/validate.sh`](https://github.com/operatorstack/intelligence-flow/blob/main/labs/21-interlock/scripts/validate.sh) exercises on a clean build, so the
 behavior is verified, not aspirational.
 
 **1. Compile a code-defined policy to canonical IR.** A policy is a tiny Go
@@ -92,7 +92,7 @@ committed field edited after the fact.
 
 ## Why Interlock, and not Pitot?
 
-[Pitot](../../15-pitot) is deliberately generic transport: it has no file-write
+[Pitot](https://github.com/operatorstack/pitot) is deliberately generic transport: it has no file-write
 action kind, and its hook event carries only a bare command string. Teaching
 Pitot to gate file writes by parsing shell text would be **dishonest** — it cannot
 see child-process writes — and would pollute a transport layer with a much larger
@@ -154,14 +154,14 @@ il.Policy("exclusive-publish.v1").
 `interlock compile` builds and runs the module's entrypoint, which prints
 `Build().Emit()` — the canonical IR. Equivalent source produces identical IR and
 therefore an identical policy hash (proved by
-[`check-determinism.sh`](../scripts/check-determinism.sh)). The compiler rejects
+[`check-determinism.sh`](https://github.com/operatorstack/intelligence-flow/blob/main/labs/21-interlock/scripts/check-determinism.sh)). The compiler rejects
 structurally invalid policies **before any request is evaluated**: duplicate ids,
 unknown actors/resources/operations, conflicting allow/deny on the same matcher,
 unreachable (shadowed) rules, and requirements on deny rules.
 
 Arbitrary construction, canonical result — a helper can loop over generated-output
 globs and emit one deny + one evidence-gated allow per tree
-([`examples/generated-file-protection`](../interlock/examples/generated-file-protection));
+([`examples/generated-file-protection`](examples/generated-file-protection));
 the Go is gone by decision time, leaving a plain, hashable decision table.
 
 ## Effect model (fixed V1 vocabulary)
