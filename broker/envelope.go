@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/operatorstack/interlock/ir"
 )
@@ -36,6 +37,73 @@ type upstreamEnvelope struct {
 	RunID          string `json:"run_id"`
 	Status         string `json:"status"`
 	ArtifactSHA256 string `json:"artifact_sha256"`
+}
+
+// UpstreamEvidence is the tenant-owned data a caller supplies to write an
+// upstream evidence envelope. The tenant owns the meaning of Schema and Status;
+// Interlock never interprets either. Deliberately absent is the artifact hash:
+// WriteUpstreamEnvelope computes it from the staged bytes themselves, so the
+// tagged-vs-bare-hex footgun is unrepresentable — a caller cannot supply a hash
+// at all, let alone the wrong format.
+type UpstreamEvidence struct {
+	Schema string
+	RunID  string
+	Status string
+}
+
+// WriteUpstreamEnvelope writes the durable upstream evidence envelope that
+// readUpstreamEnvelope re-reads. It binds the envelope to the exact staged bytes
+// by computing ir.HashBytes(staged) internally (never a caller-supplied hash),
+// and emits byte-identical output to what the reader decodes: the four
+// upstreamEnvelope fields in struct order via json.Marshal plus a trailing
+// newline. Co-locating the writer with the reader is why they can never drift.
+func WriteUpstreamEnvelope(path string, ev UpstreamEvidence, staged []byte) error {
+	data, err := json.Marshal(upstreamEnvelope{
+		Schema:         ev.Schema,
+		RunID:          ev.RunID,
+		Status:         ev.Status,
+		ArtifactSHA256: ir.HashBytes(staged),
+	})
+	if err != nil {
+		return fmt.Errorf("interlock/broker: marshal upstream envelope: %w", err)
+	}
+	if err := WriteFileAtomic(path, append(data, '\n'), 0o600); err != nil {
+		return fmt.Errorf("interlock/broker: write upstream envelope: %w", err)
+	}
+	return nil
+}
+
+// WriteFileAtomic writes data to a same-directory temp file (fsync'd, chmod'd)
+// and renames it into place, so a reader never observes a partial file. This is a
+// generic durable-write utility — NOT the broker's protected effect, which is the
+// policy-gated atomic publish in Publish. It is exported so the publishing façade
+// can persist evidence through the same implementation rather than duplicating it.
+func WriteFileAtomic(path string, data []byte, mode os.FileMode) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return err
+	}
+	file, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+".*.tmp")
+	if err != nil {
+		return err
+	}
+	name := file.Name()
+	defer os.Remove(name)
+	if _, err = file.Write(data); err != nil {
+		file.Close()
+		return err
+	}
+	if err = file.Sync(); err != nil {
+		file.Close()
+		return err
+	}
+	if err = file.Chmod(mode); err != nil {
+		file.Close()
+		return err
+	}
+	if err = file.Close(); err != nil {
+		return err
+	}
+	return os.Rename(name, path)
 }
 
 // readUpstreamEnvelope reads the envelope at path, verifies it correlates to the
