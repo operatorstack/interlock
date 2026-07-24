@@ -97,6 +97,37 @@ Replay fails closed on a changed policy, a missing or reordered link, mismatched
 evidence, a duplicate or out-of-order sequence, a cross-run receipt, or any
 committed field edited after the fact.
 
+## Does it work?
+
+Every claim below is checked by `interlock verify`, which runs the release proof
+against the shipped runtime — the real engine, broker, and receipt chain, not a
+prose description of them. This section is **generated** by
+`scripts/gen-proof.sh` and **diff-gated in CI**: a hand-edited table fails the
+build, so a green row can never drift into marketing fiction. Run it yourself:
+
+```bash
+interlock verify              # PASS/FAIL per guarantee, RESULT, commit, protocol
+interlock verify --format json
+```
+
+<!-- interlock-proof:start -->
+| Claim | Result | Evidence |
+| --- | --- | --- |
+| Canonical IR is deterministic | PASS | 4 frozen policy hashes |
+| Engine decisions conform | PASS | positive + negative vectors |
+| Broker publishes exact bytes | PASS | broker lifecycle suite |
+| Evidence mismatch fails closed | PASS | negative broker vectors |
+| Receipt chains detect mutation | PASS | replay suite |
+| Pitot transports decisions | PASS | Controller round-trip |
+
+Verified at commit `07dad7e`.
+<!-- interlock-proof:end -->
+
+The `interlock verify` binary carries these checks with no toolchain required. A
+compatibility-lock corpus (`conformance/compat/v0.1.0/`) freezes today's policy
+hashes and decisions: future releases may add vocabulary, but a changed old hash
+or old decision is a breaking change and fails CI.
+
 ## Why Interlock, and not Pitot?
 
 [Pitot](https://github.com/operatorstack/pitot) is deliberately generic transport: it has no file-write
