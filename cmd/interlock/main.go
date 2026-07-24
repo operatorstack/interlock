@@ -45,6 +45,8 @@ func main() {
 		err = cmdReplay(os.Args[2:])
 	case "doctor":
 		err = cmdDoctor(os.Args[2:])
+	case "verify":
+		err = cmdVerify(os.Args[2:])
 	case "-h", "--help", "help":
 		usage()
 		return
@@ -72,6 +74,7 @@ usage:
   interlock simulate <policy.json> <reqs.jsonl> <run_id> -o <receipts.jsonl>   decide a stream → receipt chain
   interlock replay <policy.json> <reqs.jsonl> <receipts.jsonl>   verify a decision chain
   interlock doctor                           report environment readiness
+  interlock verify [--format text|json|markdown]   run the release proof
 `)
 }
 
