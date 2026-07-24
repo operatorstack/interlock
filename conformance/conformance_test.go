@@ -47,3 +47,24 @@ func TestNegative(t *testing.T) {
 	}
 	run(t, cases)
 }
+
+func TestGoldenHashes(t *testing.T) {
+	cases, err := GoldenHashes()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(cases) == 0 {
+		t.Fatal("no golden-hash cases loaded")
+	}
+	for _, c := range cases {
+		t.Run(c.Name, func(t *testing.T) {
+			got, err := c.Policy.Hash()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got != c.ExpectedHash {
+				t.Fatalf("%s: hash = %s, want %s (canonical form or example drifted)", c.Name, got, c.ExpectedHash)
+			}
+		})
+	}
+}

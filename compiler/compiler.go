@@ -202,6 +202,8 @@ func validRequirement(req ir.Requirement) bool {
 		return req.Receipt != "" && req.Status != ""
 	case ir.ReqStagedHashMatch, ir.ReqPolicyHashMatch, ir.ReqTargetHashMatch:
 		return true
+	case ir.ReqHumanApproval:
+		return req.Approval != ""
 	default:
 		return false
 	}

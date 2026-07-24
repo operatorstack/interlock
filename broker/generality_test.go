@@ -42,12 +42,14 @@ func releaseManifestPolicy() ir.Policy {
 	}
 }
 
-func releaseReq(ws workspace.Layout, staged string) PublishRequest {
+func releaseReq(t *testing.T, ws workspace.Layout, staged string) PublishRequest {
+	t.Helper()
+	env := boundEnvelope(t, ws, "rel-envelope.json", releaseAttestationSchema, "approved", "rel1", staged)
 	return PublishRequest{
 		RunID: "rel1", RequestID: "pub1", Actor: "release-bot",
 		ResourceURI: "repo://dist/release-manifest.json", Kind: ir.KindFile,
 		StagedPath: staged, TargetPath: ws.ProtectedPath("release-manifest.json"),
-		Upstream: []UpstreamReceipt{{Schema: releaseAttestationSchema, Status: "approved", RunID: "rel1"}},
+		Upstream: []UpstreamReceipt{{Path: env}},
 	}
 }
 
@@ -55,7 +57,7 @@ func TestGeneralityReleaseBotPublishes(t *testing.T) {
 	p := releaseManifestPolicy()
 	ws := newWS(t)
 	staged := stage(t, ws, "release-manifest.json", `{"version":"1.2.3"}`)
-	res, err := Publish(p, releaseReq(ws, staged), receipt.NewChain("rel1"))
+	res, err := Publish(p, releaseReq(t, ws, staged), receipt.NewChain("rel1"))
 	if err != nil {
 		t.Fatalf("release publish failed: %v", err)
 	}
@@ -72,7 +74,7 @@ func TestGeneralityBuildRunnerCannotPublish(t *testing.T) {
 	p := releaseManifestPolicy()
 	ws := newWS(t)
 	staged := stage(t, ws, "release-manifest.json", "x")
-	req := releaseReq(ws, staged)
+	req := releaseReq(t, ws, staged)
 	req.Actor = "build-runner"
 	_, err := Publish(p, req, receipt.NewChain("rel1"))
 	if !errors.Is(err, ErrDenied) {
@@ -87,7 +89,7 @@ func TestGeneralityMissingAttestationFailsClosed(t *testing.T) {
 	p := releaseManifestPolicy()
 	ws := newWS(t)
 	staged := stage(t, ws, "release-manifest.json", "x")
-	req := releaseReq(ws, staged)
+	req := releaseReq(t, ws, staged)
 	req.Upstream = nil // no release attestation
 	_, err := Publish(p, req, receipt.NewChain("rel1"))
 	if err == nil {
@@ -105,8 +107,11 @@ func TestGeneralityWrongSchemaFailsClosed(t *testing.T) {
 	p := releaseManifestPolicy()
 	ws := newWS(t)
 	staged := stage(t, ws, "release-manifest.json", "x")
-	req := releaseReq(ws, staged)
-	req.Upstream = []UpstreamReceipt{{Schema: "deltawire.supervision.receipt.v1", Status: "released", RunID: "rel1"}}
+	req := releaseReq(t, ws, staged)
+	// A DeltaWire-schema envelope (hash-bound and correlated) still must not
+	// satisfy a release-manifest policy — the schema is policy data, not core.
+	env := boundEnvelope(t, ws, "wrong-schema-envelope.json", "deltawire.supervision.receipt.v1", "released", "rel1", staged)
+	req.Upstream = []UpstreamReceipt{{Path: env}}
 	_, err := Publish(p, req, receipt.NewChain("rel1"))
 	if err == nil {
 		t.Fatal("a foreign receipt schema should not satisfy this policy")

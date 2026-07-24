@@ -157,7 +157,8 @@ func unsatisfied(rule ir.Rule, req protocol.EffectRequest, policyHash string) []
 // policy_hash_match the engine checks the request's claimed hash against the
 // live policy hash it computed. For every other kind it compares claimed
 // evidence fields — the engine trusts the claims; the broker guarantees they are
-// truthful.
+// truthful. A human_approval requirement matches an evidence claim whose Value
+// carries the approval id (the same claim-trusting split as receipts).
 func satisfied(want ir.Requirement, req protocol.EffectRequest, policyHash string) bool {
 	if want.Kind == ir.ReqPolicyHashMatch {
 		return req.ClaimedPolicyHash != "" && req.ClaimedPolicyHash == policyHash
@@ -170,6 +171,9 @@ func satisfied(want ir.Requirement, req protocol.EffectRequest, policyHash strin
 			continue
 		}
 		if want.Status != "" && ev.Status != want.Status {
+			continue
+		}
+		if want.Approval != "" && ev.Value != want.Approval {
 			continue
 		}
 		return true
