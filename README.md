@@ -149,7 +149,7 @@ interlock verify --format json
 | Receipt chains detect mutation | PASS | replay suite |
 | Pitot transports decisions | PASS | Controller round-trip |
 
-Verified at commit `07dad7e`.
+Verified at version `dev`, commit `d35e1b8-dirty`.
 <!-- interlock-proof:end -->
 
 The `interlock verify` binary carries these checks with no toolchain required. A
@@ -276,11 +276,40 @@ by the broker tests, not just asserted here.
 
 ## Install
 
+**Prebuilt binary (no Go toolchain).** The installer detects your platform,
+downloads a pinned release, **verifies its SHA-256 checksum**, installs the
+binary, and runs `interlock doctor` + the repository-policy demo:
+
+```bash
+# macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/operatorstack/interlock/main/install.sh | sh
+```
+
+```powershell
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/operatorstack/interlock/main/install.ps1 | iex
+```
+
+Prebuilt binaries are published for macOS (arm64/amd64), Linux (amd64/arm64), and
+Windows (amd64). Every release attaches `checksums.txt`, a per-archive SBOM, and
+signed build provenance you can verify with the GitHub CLI:
+
+```bash
+gh attestation verify interlock_<version>_<os>_<arch>.tar.gz --repo operatorstack/interlock
+```
+
+Prefer to pin a version or install elsewhere: set `INTERLOCK_VERSION=v0.1.0` or
+`INTERLOCK_INSTALL_DIR=$HOME/.local/bin` before running the installer.
+
+**Homebrew (coming soon).** `brew install operatorstack/tap/interlock` ships in a
+follow-up once the tap is published.
+
+**With a Go toolchain.** Install the latest tagged release, or build from a
+checkout and inspect environment readiness:
+
 ```bash
 go install github.com/operatorstack/interlock/cmd/interlock@latest
 ```
-
-Or build from a checkout and inspect environment readiness:
 
 ```bash
 go build -o interlock ./cmd/interlock
@@ -289,12 +318,16 @@ interlock doctor
 
 ```
 interlock doctor
+  version         : dev
   policy protocol : interlock.policy.v1
   effect protocol : interlock.effect.v1
   receipt schema  : interlock.receipt.v1
   go toolchain    : available
   note            : init --authoring json and test need no toolchain
 ```
+
+`interlock version` prints the release version, embedded commit, build date, and
+the three protocol/schema versions.
 
 `interlock init` (bare) sets up the no-toolchain JSON policy described in
 [Start here](#start-here-no-toolchain); `interlock init --authoring go <dir>`

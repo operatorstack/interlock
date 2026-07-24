@@ -154,10 +154,19 @@ func isPitotDir(dir string) bool {
 
 // --- Build info -----------------------------------------------------------
 
-// buildCommit returns the short VCS revision the binary was built from, with a
-// "-dirty" suffix when the tree was modified. It reads runtime build info, which
-// is populated by `go build` (not `go run`); it returns "unknown" otherwise.
+// buildCommit returns the short commit the binary was built from, with a
+// "-dirty" suffix when the tree was modified. A release build injects the commit
+// via ldflags (`-X main.commit=...`), which wins; otherwise it reads runtime
+// build info, populated by `go build` (not `go run`), and returns "unknown" when
+// neither source is available.
 func buildCommit() string {
+	if commit != "" {
+		rev := commit
+		if len(rev) > 7 {
+			rev = rev[:7]
+		}
+		return rev
+	}
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
 		return "unknown"
@@ -209,6 +218,7 @@ func printVerifyText(lines []verifyLine, failed bool, commit string) {
 	} else {
 		fmt.Println("RESULT: PASS")
 	}
+	fmt.Printf("Version: %s\n", releaseVersion())
 	fmt.Printf("Commit: %s\n", commit)
 	fmt.Printf("Protocol: %s\n", ir.Protocol)
 	fmt.Println()
@@ -229,12 +239,14 @@ func printVerifyJSON(lines []verifyLine, failed bool, commit string) error {
 		Proof    string       `json:"proof"`
 		Results  []verifyLine `json:"results"`
 		Result   string       `json:"result"`
+		Version  string       `json:"version"`
 		Commit   string       `json:"commit"`
 		Protocol string       `json:"protocol"`
 	}{
 		Proof:    "Interlock Release Proof",
 		Results:  lines,
 		Result:   result,
+		Version:  releaseVersion(),
 		Commit:   commit,
 		Protocol: ir.Protocol,
 	})
@@ -294,7 +306,7 @@ func printVerifyMarkdown(lines []verifyLine, failed bool, commit string) {
 		fmt.Printf("| %s | %s | %s |\n", r.claim, statusLabel(rowStatus(lines, r.backing)), r.evidence)
 	}
 	fmt.Println()
-	fmt.Printf("Verified at commit `%s`.\n", commit)
+	fmt.Printf("Verified at version `%s`, commit `%s`.\n", releaseVersion(), commit)
 }
 
 // lastLine returns the last non-empty line of s (used to surface a failing

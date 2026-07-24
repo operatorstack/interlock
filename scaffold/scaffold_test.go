@@ -50,3 +50,44 @@ func TestTemplatesSelfProve(t *testing.T) {
 		})
 	}
 }
+
+// TestDemosSelfProve compiles every built-in demo and re-decides its narrated
+// scenarios through the real engine. This is the guarantee behind `interlock
+// demo`: the outcomes a just-installed binary prints are live decisions, so the
+// showcase can never drift from the engine it is meant to demonstrate.
+func TestDemosSelfProve(t *testing.T) {
+	demos := Demos()
+	if len(demos) == 0 {
+		t.Fatal("no demos registered")
+	}
+	for _, d := range demos {
+		d := d
+		t.Run(d.Key, func(t *testing.T) {
+			pol, err := d.build("").Compile()
+			if err != nil {
+				t.Fatalf("demo %q does not compile: %v", d.Key, err)
+			}
+			vectors := d.Vectors("")
+			if len(vectors) == 0 {
+				t.Fatalf("demo %q has no scenarios", d.Key)
+			}
+			for _, v := range vectors {
+				req := v.Request
+				if v.UsePolicyHash {
+					h, err := pol.Hash()
+					if err != nil {
+						t.Fatalf("hashing policy for %q: %v", v.Name, err)
+					}
+					req.ClaimedPolicyHash = h
+				}
+				dec := engine.Decide(pol, req)
+				if dec.Outcome != v.Expect {
+					t.Errorf("%s / %q: outcome = %q, want %q", d.Key, v.Name, dec.Outcome, v.Expect)
+				}
+				if v.ExpectRuleID != "" && dec.RuleID != v.ExpectRuleID {
+					t.Errorf("%s / %q: rule = %q, want %q", d.Key, v.Name, dec.RuleID, v.ExpectRuleID)
+				}
+			}
+		})
+	}
+}
