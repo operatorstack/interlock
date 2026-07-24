@@ -1,6 +1,6 @@
 {
   "files": {
-    "README.md": "64616a6abd4176c4f9dc2e043b4709de31ece50d502139d48af2e600b6dcf285",
+    "README.md": "e471b00e626881e4bc16373d5c42fceb39c6e9e69adeadd622f25da56dda92fa",
     "assets/interlock-boundary.png": "9ae73098102d0589bf1bb912af6d39df4d1465eb93e8cea5b7e982e6fa79ef51",
     "assets/interlock-boundary.svg": "0bbb5aacc90e9311aef732dc2075aa0896ec25d0789b6612a3d98922646a0f1e",
     "assets/interlock-hero.png": "a30def06d493775458455ed891f1631200a61eafa54fa53d64474a3d340e2757",
@@ -12,7 +12,9 @@
     "broker/broker_test.go": "5ccf4f6aad1ae846ce405f92fc6c75728e4adec49eaedcdd45f76e6b91dc0a6b",
     "broker/envelope.go": "a1f6e2333c45f5f15ce1b1d58cd29589cbc35abcdb0f93ea01c56060f7dcafcf",
     "broker/generality_test.go": "14b83f8dd8e25562cd5d099e7d0b9285d15d2874cddd42f3901303c0553ee596",
-    "cmd/interlock/main.go": "96aba4480c7d6b1bb16fae0b1391cd18408165da7b652171517db491049104d7",
+    "cmd/interlock/init.go": "ea4df1ba3bcf0ec2f62cf02752b39598027376096ba974b2e770b0a79dc4ba0f",
+    "cmd/interlock/main.go": "8b24090172c4cab9712b22084c607c1a3333841bf4234c4d6ff244e63fb54164",
+    "cmd/interlock/test.go": "e9b680cde45e061155dcc375b057f8ff4e69559d5f2be7dcd15f3685af0e1079",
     "cmd/interlock/verify.go": "9e5a96b45ac0ebc632a7d64f14f1ecc4749a1fbe3e1514733c629b81c2219915",
     "compiler/compiler.go": "50487aaa0c24b3c0d041ab5b9a410fa672de7eb77b1cd3df1ec97cd4cf2bccba",
     "compiler/compiler_test.go": "6f80886aa1bfdf79bca014ad47c7b48d2a6bc24c86863afa4ebeb93658a790aa",
@@ -51,13 +53,16 @@
     "protocol/protocol.go": "1d9cc6ba1d59635e9c88ab9a20058491c78d0024e5e87fd25ec87628271c728e",
     "receipt/receipt.go": "8a21b9054b599965221e08fe158887759473d2f41d28dd3df42a1ffe1c55cb6e",
     "receipt/receipt_test.go": "a215a205205573bb0fbf6d121aa761bc28510346b92e8bb72dd85ca90b6fa65c",
+    "scaffold/readme.go": "6f2f7db1e92f7e650072b5b26d29d91c8e229e223b717edecef195b9c0fae940",
+    "scaffold/scaffold.go": "27a9d642a10bfeab76b5a9972e95804cc37b9d19dc29d12835544df0ce370a6b",
+    "scaffold/scaffold_test.go": "9fdfa3b1c9bd1043d80919e412a0f3083a9bc87b7121411c4627fe3cb307a570",
     "spec/spec.go": "65634ab25713fcf646fdf35d13fe5effe6752f602e5bf962ddb32c14b36610ce",
     "workspace/workspace.go": "8d91408ac4bc87a136744360a2e1aede620c44f6050c8845eb3cad39d3be2a54"
   },
   "generator": "operatorstack/interlock:project-upstream",
   "schema_version": 1,
   "source": {
-    "commit": "9db8f6b37fd210974db42a9e1437770a46892211",
+    "commit": "ceecc2f494505565a230fdeb532c52c1dd29461a",
     "path": "labs/21-interlock",
     "repository": "operatorstack/intelligence-flow"
   }
