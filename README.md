@@ -63,19 +63,26 @@ interlock decide policy.json deny-req.json
 }
 ```
 
-**3. The broker publishes — on truthful, correlated evidence.** The broker hashes
-the real staged bytes, correlates the real receipt, and atomically promotes the
-file to the protected path:
+**3. The broker publishes — on truthful, durable evidence.** The broker hashes the
+real staged bytes, re-reads the upstream evidence envelope from disk, and
+atomically promotes the file to the protected path:
 
 ```bash
 interlock publish policy.json pub.json
 # → repo://out/result.json now holds the byte-exact staged candidate
 ```
 
-If the staged hash, policy hash, receipt status, run correlation, or expected
-target state is wrong, the publish **fails closed** and the target is left
-untouched. The engine compares *claims*; the broker is what makes claims
-*truthful*.
+Upstream evidence is a durable envelope (`{schema, run_id, status,
+artifact_sha256}`) the broker re-reads — it takes the receipt schema and status
+*from the file*, never from a caller-claimed struct field, and requires the
+envelope's `artifact_sha256` to match the exact staged bytes it just hashed. This
+is **hash-binding, not authenticity**: it proves the evidence refers to *these
+bytes* for *this run* — defeating stale, copied, cross-run, or typo'd claims — but
+does not by itself prove who produced them (whoever can write the staged file can
+write the envelope). If the staged hash, policy hash, envelope status, run
+correlation, hash-binding, or expected target state is wrong, the publish **fails
+closed** and the target is left untouched. The engine compares *claims*; the
+broker is what makes claims *truthful*.
 
 **4. Every decision is a receipt you can replay.** `simulate` turns a request
 stream into a hash-linked receipt chain; `replay` re-derives each decision and
@@ -291,7 +298,11 @@ the exclusive-publish broker with an isolation fixture — all green under
 DeltaWire delegates its one protected effect — the final atomic promote — to this
 broker, importing Interlock as a library only (never into its compiler or
 evaluator); `deltawire supervise --broker` runs the whole stack through
-`broker.Publish`. **M3** is complete: a second, non-DeltaWire tenant (the
+`broker.Publish`. The broker re-reads a durable, hash-bound upstream evidence
+envelope written before the promote — taking status from the file, never a
+caller-claimed string — and gates on DeltaWire's honest pre-promote status
+(`release_authorized`), since the run is released only *because* the broker
+publishes. **M3** is complete: a second, non-DeltaWire tenant (the
 [`release-manifest`](interlock/examples/release-manifest) example — different
 artifact, actors, and receipt schema) flows through the *same* `broker.Publish`
 and the same conformance suite, proving the core carries no DeltaWire-specific
