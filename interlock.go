@@ -182,3 +182,15 @@ func (b *Builder) Emit() ([]byte, error) {
 	}
 	return p.CanonicalBytes()
 }
+
+// EmitSpec compiles-to-validate, then returns the policy as serialized
+// interlock.spec.v1 (the neutral authoring format), not canonical IR. It runs the
+// compiler first so a structurally invalid policy fails here rather than emitting
+// a spec.v1 document that only breaks downstream. This is the Go frontend's path
+// to the same authoring target the JSON/TS/Python frontends emit.
+func (b *Builder) EmitSpec() ([]byte, error) {
+	if _, err := b.Compile(); err != nil {
+		return nil, err
+	}
+	return spec.Encode(spec.FromSpec(b.s))
+}

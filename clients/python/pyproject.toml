@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "interlock-protocol"
+version = "0.1.0"
+description = "Generated protocol types and canonical encoder for Interlock (interlock.spec.v1 / interlock.policy.v1). Data types only — enforcement stays the Go executable."
+license = "Apache-2.0"
+requires-python = ">=3.11"
+# Zero runtime dependencies: canonicalization uses only the standard library
+# (hashlib, json). Typing uses typing.Required (3.11+).
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+interlock_protocol = ["py.typed"]

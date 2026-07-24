@@ -1,0 +1,82 @@
+{
+  "protocol": "interlock.spec.v1",
+  "policy_id": "generated-file-protection.v1",
+  "actors": [
+    "agent",
+    "publisher"
+  ],
+  "resources": [
+    {
+      "id": "openapi",
+      "kind": "tree",
+      "uri": "repo://gen/openapi/**"
+    },
+    {
+      "id": "pb-descriptors",
+      "kind": "tree",
+      "uri": "repo://gen/pb/**"
+    }
+  ],
+  "rules": [
+    {
+      "id": "deny-agent-openapi",
+      "effect": "deny",
+      "actor": "agent",
+      "operations": [
+        "artifact.publish",
+        "filesystem.delete",
+        "filesystem.write"
+      ],
+      "resource": "openapi",
+      "reason": "generated tree openapi is owned by the build, not the agent"
+    },
+    {
+      "id": "publish-openapi",
+      "effect": "allow",
+      "actor": "publisher",
+      "operations": [
+        "artifact.publish"
+      ],
+      "resource": "openapi",
+      "requires": [
+        {
+          "kind": "policy_hash_match"
+        },
+        {
+          "kind": "staged_hash_match"
+        }
+      ],
+      "reason": "the build publisher may refresh openapi"
+    },
+    {
+      "id": "deny-agent-pb-descriptors",
+      "effect": "deny",
+      "actor": "agent",
+      "operations": [
+        "artifact.publish",
+        "filesystem.delete",
+        "filesystem.write"
+      ],
+      "resource": "pb-descriptors",
+      "reason": "generated tree pb-descriptors is owned by the build, not the agent"
+    },
+    {
+      "id": "publish-pb-descriptors",
+      "effect": "allow",
+      "actor": "publisher",
+      "operations": [
+        "artifact.publish"
+      ],
+      "resource": "pb-descriptors",
+      "requires": [
+        {
+          "kind": "policy_hash_match"
+        },
+        {
+          "kind": "staged_hash_match"
+        }
+      ],
+      "reason": "the build publisher may refresh pb-descriptors"
+    }
+  ]
+}

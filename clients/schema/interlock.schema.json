@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://interlock.operatorstack.dev/schema/interlock.schema.json",
+  "title": "Interlock protocol types",
+  "$defs": {
+    "Effect": {
+      "type": "string",
+      "enum": ["allow", "deny"]
+    },
+    "Fidelity": {
+      "type": "string",
+      "enum": ["observed", "opaque", "brokered"]
+    },
+    "Operation": {
+      "type": "string",
+      "enum": ["filesystem.read", "filesystem.write", "filesystem.delete", "filesystem.rename_from", "filesystem.rename_to", "process.execute", "artifact.publish", "vcs.push", "vcs.force_push"]
+    },
+    "Outcome": {
+      "type": "string",
+      "enum": ["allow", "deny", "require", "fault"]
+    },
+    "RequirementKind": {
+      "type": "string",
+      "enum": ["receipt_status", "staged_hash_match", "policy_hash_match", "target_hash_match", "human_approval"]
+    },
+    "ResourceKind": {
+      "type": "string",
+      "enum": ["file", "tree", "process", "branch"]
+    },
+    "SpecDoc": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "protocol": { "type": "string" },
+        "policy_id": { "type": "string" },
+        "actors": { "type": "array", "items": { "type": "string" } },
+        "resources": { "type": "array", "items": { "$ref": "#/$defs/ResourceDoc" } },
+        "rules": { "type": "array", "items": { "$ref": "#/$defs/RuleDoc" } }
+      },
+      "required": ["protocol", "policy_id", "actors", "resources", "rules"]
+    },
+    "ResourceDoc": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "kind": { "$ref": "#/$defs/ResourceKind" },
+        "uri": { "type": "string" }
+      },
+      "required": ["id", "kind", "uri"]
+    },
+    "RuleDoc": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "effect": { "$ref": "#/$defs/Effect" },
+        "actor": { "type": "string" },
+        "operations": { "type": "array", "items": { "$ref": "#/$defs/Operation" } },
+        "resource": { "type": "string" },
+        "requires": { "type": "array", "items": { "$ref": "#/$defs/Requirement" } },
+        "reason": { "type": "string" }
+      },
+      "required": ["id", "effect", "actor", "operations", "resource"]
+    },
+    "Policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "protocol": { "type": "string" },
+        "policy_id": { "type": "string" },
+        "actors": { "type": "array", "items": { "type": "string" } },
+        "resources": { "type": "array", "items": { "$ref": "#/$defs/Resource" } },
+        "rules": { "type": "array", "items": { "$ref": "#/$defs/Rule" } }
+      },
+      "required": ["protocol", "policy_id", "actors", "resources", "rules"]
+    },
+    "Resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "kind": { "$ref": "#/$defs/ResourceKind" },
+        "uri": { "type": "string" }
+      },
+      "required": ["id", "kind", "uri"]
+    },
+    "Rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "effect": { "$ref": "#/$defs/Effect" },
+        "actor": { "type": "string" },
+        "operations": { "type": "array", "items": { "$ref": "#/$defs/Operation" } },
+        "resource": { "type": "string" },
+        "requires": { "type": "array", "items": { "$ref": "#/$defs/Requirement" } },
+        "reason": { "type": "string" }
+      },
+      "required": ["id", "effect", "actor", "operations", "resource"]
+    },
+    "Requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "$ref": "#/$defs/RequirementKind" },
+        "receipt": { "type": "string" },
+        "status": { "type": "string" },
+        "approval": { "type": "string" }
+      },
+      "required": ["kind"]
+    },
+    "TargetResource": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "$ref": "#/$defs/ResourceKind" },
+        "uri": { "type": "string" }
+      },
+      "required": ["kind", "uri"]
+    },
+    "Observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source": { "type": "string" },
+        "fidelity": { "$ref": "#/$defs/Fidelity" }
+      },
+      "required": ["source", "fidelity"]
+    },
+    "Evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "$ref": "#/$defs/RequirementKind" },
+        "receipt": { "type": "string" },
+        "status": { "type": "string" },
+        "value": { "type": "string" }
+      },
+      "required": ["kind"]
+    },
+    "EffectRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "protocol": { "type": "string" },
+        "request_id": { "type": "string" },
+        "run_id": { "type": "string" },
+        "actor": { "type": "string" },
+        "operation": { "$ref": "#/$defs/Operation" },
+        "resource": { "$ref": "#/$defs/TargetResource" },
+        "observation": { "$ref": "#/$defs/Observation" },
+        "claimed_policy_hash": { "type": "string" },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/Evidence" } }
+      },
+      "required": ["protocol", "request_id", "run_id", "actor", "operation", "resource", "observation"]
+    },
+    "Decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "protocol": { "type": "string" },
+        "request_id": { "type": "string" },
+        "policy_hash": { "type": "string" },
+        "outcome": { "$ref": "#/$defs/Outcome" },
+        "rule_id": { "type": "string" },
+        "reason": { "type": "string" },
+        "missing_evidence": { "type": "array", "items": { "$ref": "#/$defs/Requirement" } }
+      },
+      "required": ["protocol", "request_id", "policy_hash", "outcome", "reason"]
+    },
+    "Receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema": { "type": "string" },
+        "sequence": { "type": "integer" },
+        "run_id": { "type": "string" },
+        "request_id": { "type": "string" },
+        "request_hash": { "type": "string" },
+        "policy_hash": { "type": "string" },
+        "rule_id": { "type": "string" },
+        "outcome": { "$ref": "#/$defs/Outcome" },
+        "evidence_hashes": { "type": "array", "items": { "type": "string" } },
+        "prev_receipt_hash": { "type": "string" },
+        "self_hash": { "type": "string" }
+      },
+      "required": ["schema", "sequence", "run_id", "request_id", "request_hash", "policy_hash", "outcome", "prev_receipt_hash", "self_hash"]
+    },
+    "UpstreamReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string" }
+      },
+      "required": ["path"]
+    },
+    "PublishRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "run_id": { "type": "string" },
+        "request_id": { "type": "string" },
+        "actor": { "type": "string" },
+        "resource_uri": { "type": "string" },
+        "kind": { "$ref": "#/$defs/ResourceKind" },
+        "staged_path": { "type": "string" },
+        "target_path": { "type": "string" },
+        "expected_target_hash": { "type": "string" },
+        "upstream": { "type": "array", "items": { "$ref": "#/$defs/UpstreamReceipt" } }
+      },
+      "required": ["run_id", "request_id", "actor", "resource_uri", "kind", "staged_path", "target_path"]
+    }
+  }
+}

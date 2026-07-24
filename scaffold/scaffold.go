@@ -40,9 +40,11 @@ type Template struct {
 	rules   func(path string) []string // plain-English rule descriptions for the README
 }
 
-// Policy returns the template's canonical policy bytes. path is used only by the
+// Policy returns the template's authoring document as serialized
+// interlock.spec.v1 — the neutral, no-toolchain authoring format that `interlock
+// test`/`compile` run through the real compiler. path is used only by the
 // "custom" template (the protected glob); other templates ignore it.
-func (t Template) Policy(path string) ([]byte, error) { return t.build(path).Emit() }
+func (t Template) Policy(path string) ([]byte, error) { return t.build(path).EmitSpec() }
 
 // Vectors returns the template's test vectors for the given custom path.
 func (t Template) Vectors(path string) []Vector { return t.vectors(path) }

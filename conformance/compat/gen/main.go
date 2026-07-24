@@ -23,20 +23,43 @@ import (
 	"github.com/operatorstack/interlock/ir"
 	"github.com/operatorstack/interlock/protocol"
 	"github.com/operatorstack/interlock/receipt"
+	"github.com/operatorstack/interlock/spec"
 )
 
 const root = "conformance/compat/v0.1.0"
 
 func main() {
 	must(os.MkdirAll(filepath.Join(root, "policies"), 0o755))
+	must(os.MkdirAll(filepath.Join(root, "specs"), 0o755))
 	must(os.MkdirAll(filepath.Join(root, "receipts"), 0o755))
 
 	freezePoliciesAndHashes()
+	freezeSpecs()
 	freezeDecisions()
 	freezeBroker()
 	freezeReceipts()
 
 	fmt.Println("froze compat corpus at", root)
+}
+
+// freezeSpecs writes each golden policy's interlock.spec.v1 authoring input to
+// specs/<name>.json. The spec is derived from the frozen canonical IR, so it
+// re-compiles to byte-identical canonical bytes and the same frozen hash — this
+// is the cross-language parity manifest: every non-Go frontend reads these
+// spec.v1 documents, canonicalizes, and must reproduce the frozen hash.
+func freezeSpecs() {
+	cases, err := conformance.GoldenHashes()
+	must(err)
+	f := create(filepath.Join(root, "specs.jsonl"))
+	defer f.Close()
+	enc := json.NewEncoder(f)
+	for _, c := range cases {
+		doc, err := spec.Encode(spec.FromPolicy(c.Policy))
+		must(err)
+		file := filepath.Join("specs", c.Name+".json")
+		must(os.WriteFile(filepath.Join(root, file), doc, 0o644))
+		must(enc.Encode(specRecord{Name: c.Name, Spec: file, ExpectedHash: c.ExpectedHash}))
+	}
 }
 
 // freezePoliciesAndHashes writes each golden policy's canonical bytes to
@@ -162,6 +185,12 @@ func freezeReceipts() {
 type hashRecord struct {
 	Name         string `json:"name"`
 	Policy       string `json:"policy"`
+	ExpectedHash string `json:"expected_hash"`
+}
+
+type specRecord struct {
+	Name         string `json:"name"`
+	Spec         string `json:"spec"`
 	ExpectedHash string `json:"expected_hash"`
 }
 
