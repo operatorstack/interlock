@@ -38,7 +38,7 @@
   "generator": "operatorstack/interlock:project-upstream",
   "schema_version": 1,
   "source": {
-    "commit": "c5b1f325f5b7eaa7db7ba910a6d58c2eaa1df10d",
+    "commit": "55e700131357f88c80f8c7fd3eedacc7b52c00ed",
     "path": "labs/21-interlock",
     "repository": "operatorstack/intelligence-flow"
   }
