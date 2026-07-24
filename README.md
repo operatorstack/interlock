@@ -24,6 +24,35 @@ time.
 
 Interlock decides. The broker performs. The agent never holds the authority.
 
+## Start here (no toolchain)
+
+The fastest first run needs no Go toolchain. `interlock init` asks what you're
+protecting and writes a declarative policy you can test immediately:
+
+```bash
+interlock init                       # interactive: "What are you protecting?"
+# → .interlock/policy.json, .interlock/tests.jsonl, .interlock/README.md
+interlock test                       # re-decides every checked-in vector
+```
+
+```
+PASS agent may edit src/**
+PASS agent may not force-push main
+PASS push to main requires release-main approval
+PASS push to main with approval is allowed
+
+RESULT: PASS  (4/4)
+```
+
+The `PASS` lines are live engine decisions against `policy.json`, not a static
+table — edit the policy and re-run to watch a line turn red. Pick a template
+non-interactively with `interlock init --authoring json --template main-branch`
+(templates: `generated`, `main-branch`, `release-artifact`, `custom`, `empty`).
+
+When you outgrow the declarative form, `interlock init --authoring go <dir>`
+scaffolds a programmable Go policy — same canonical IR, same hash, same engine
+(see [Policy as code](#policy-as-code-go-authors-canonical-ir-decides) below).
+
 ## See it work
 
 The fastest way to understand Interlock is to watch an agent's publish get denied
@@ -264,17 +293,24 @@ interlock doctor
   effect protocol : interlock.effect.v1
   receipt schema  : interlock.receipt.v1
   go toolchain    : available
+  note            : init --authoring json and test need no toolchain
 ```
 
-`interlock init <dir>` scaffolds a minimal, runnable policy module to start from.
+`interlock init` (bare) sets up the no-toolchain JSON policy described in
+[Start here](#start-here-no-toolchain); `interlock init --authoring go <dir>`
+scaffolds a programmable Go module. The positional `interlock init <dir>` is a
+deprecated alias for `--authoring go <dir>` (it prints a migration note) and will
+be removed before 1.0 — a positional path should never silently pick an authoring
+mode.
 
 ## Validation
 
 `scripts/validate.sh` is the single entrypoint. It runs `gofmt`, `go vet`, the
 test suites (repeated, and under `-race`), the purity boundary check, IR
 determinism, embed-FS conformance, a static `CGO_ENABLED=0` build, and a full CLI
-lifecycle (`init → compile → check → explain → decide → publish → simulate →
-replay`) — including a negative case proving replay rejects a mismatched policy.
+lifecycle (`init [go|json] → test → compile → check → explain → decide → publish →
+simulate → replay`) — including a negative case proving replay rejects a
+mismatched policy and that `interlock test` fails closed on a tampered policy.
 
 ```bash
 bash scripts/validate.sh

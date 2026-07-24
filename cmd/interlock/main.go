@@ -43,6 +43,8 @@ func main() {
 		err = cmdSimulate(os.Args[2:])
 	case "replay":
 		err = cmdReplay(os.Args[2:])
+	case "test":
+		err = cmdTest(os.Args[2:])
 	case "doctor":
 		err = cmdDoctor(os.Args[2:])
 	case "verify":
@@ -65,8 +67,11 @@ func usage() {
 	fmt.Fprint(os.Stderr, `interlock — code-defined effect-policy runtime
 
 usage:
-  interlock init <dir>                       scaffold a policy module
-  interlock compile <dir> [-o policy.json]   build+run a policy module → canonical IR
+  interlock init                             set up a no-toolchain JSON policy (interactive)
+  interlock init --authoring json [dir]      set up a JSON policy (dir defaults to .interlock)
+  interlock init --authoring go <dir>        scaffold a programmable Go policy module
+  interlock test [dir]                       run the policy's tests (dir defaults to .interlock)
+  interlock compile <dir> [-o policy.json]   build+run a Go policy module → canonical IR
   interlock check <policy.json>              validate canonical IR and print its hash
   interlock explain <policy.json>            print a human-readable policy summary
   interlock decide <policy.json> <req.json>  evaluate one effect request
@@ -76,54 +81,6 @@ usage:
   interlock doctor                           report environment readiness
   interlock verify [--format text|json|markdown]   run the release proof
 `)
-}
-
-// cmdInit scaffolds a minimal, deterministic policy module.
-func cmdInit(args []string) error {
-	if len(args) != 1 {
-		return fmt.Errorf("init: want <dir>")
-	}
-	dir := args[0]
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return err
-	}
-	main := `package main
-
-import (
-	"fmt"
-	"os"
-
-	il "github.com/operatorstack/interlock"
-)
-
-// Build constructs the policy. Arbitrary Go may run here; only the emitted IR
-// decides requests.
-func Build() *il.Builder {
-	return il.Policy("example.v1").
-		Actor("agent").
-		Actor("publisher").
-		File("artifact", "repo://out/result.json").
-		Deny("agent-no-write").By("agent").To(il.Write, il.Publish).On("artifact").
-		Because("the producing agent may not write the protected artifact").Add().
-		Allow("publisher-may-publish").By("publisher").To(il.Publish).On("artifact").
-		Requiring(il.PolicyHashMatch(), il.StagedHashMatch()).
-		Because("the verified publisher may publish a staged candidate").Add()
-}
-
-func main() {
-	b, err := Build().Emit()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-	os.Stdout.Write(b)
-}
-`
-	if err := os.WriteFile(filepath.Join(dir, "policy.go"), []byte(main), 0o644); err != nil {
-		return err
-	}
-	fmt.Printf("scaffolded policy module at %s\n", dir)
-	return nil
 }
 
 // cmdCompile builds and runs a policy module, capturing its canonical IR on
@@ -351,10 +308,11 @@ func cmdDoctor(args []string) error {
 	fmt.Printf("  effect protocol : %s\n", protocol.EffectRequestProtocol)
 	fmt.Printf("  receipt schema  : %s\n", receipt.Schema)
 	if _, err := exec.LookPath("go"); err != nil {
-		fmt.Printf("  go toolchain    : NOT FOUND (compile unavailable)\n")
+		fmt.Printf("  go toolchain    : NOT FOUND (needed only for compile / init --authoring go)\n")
 	} else {
 		fmt.Printf("  go toolchain    : available\n")
 	}
+	fmt.Printf("  note            : init --authoring json and test need no toolchain\n")
 	return nil
 }
 
