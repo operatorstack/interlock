@@ -45,10 +45,14 @@ func main() {
 		err = cmdReplay(os.Args[2:])
 	case "test":
 		err = cmdTest(os.Args[2:])
+	case "demo":
+		err = cmdDemo(os.Args[2:])
 	case "doctor":
 		err = cmdDoctor(os.Args[2:])
 	case "verify":
 		err = cmdVerify(os.Args[2:])
+	case "version", "-v", "--version":
+		err = cmdVersion(os.Args[2:])
 	case "-h", "--help", "help":
 		usage()
 		return
@@ -71,6 +75,7 @@ usage:
   interlock init --authoring json [dir]      set up a JSON policy (dir defaults to .interlock)
   interlock init --authoring go <dir>        scaffold a programmable Go policy module
   interlock test [dir]                       run the policy's tests (dir defaults to .interlock)
+  interlock demo [name]                       narrate a built-in policy (default repository-policy; --list)
   interlock compile <dir> [-o policy.json]   build+run a Go policy module → canonical IR
   interlock check <policy.json>              validate canonical IR and print its hash
   interlock explain <policy.json>            print a human-readable policy summary
@@ -80,6 +85,7 @@ usage:
   interlock replay <policy.json> <reqs.jsonl> <receipts.jsonl>   verify a decision chain
   interlock doctor                           report environment readiness
   interlock verify [--format text|json|markdown]   run the release proof
+  interlock version                          print the release version, commit, and protocols
 `)
 }
 
@@ -304,6 +310,7 @@ func cmdReplay(args []string) error {
 
 func cmdDoctor(args []string) error {
 	fmt.Printf("interlock doctor\n")
+	fmt.Printf("  version         : %s\n", releaseVersion())
 	fmt.Printf("  policy protocol : %s\n", ir.Protocol)
 	fmt.Printf("  effect protocol : %s\n", protocol.EffectRequestProtocol)
 	fmt.Printf("  receipt schema  : %s\n", receipt.Schema)

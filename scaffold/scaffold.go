@@ -47,6 +47,9 @@ func (t Template) Policy(path string) ([]byte, error) { return t.build(path).Emi
 // Vectors returns the template's test vectors for the given custom path.
 func (t Template) Vectors(path string) []Vector { return t.vectors(path) }
 
+// Rules returns the template's plain-English rule descriptions.
+func (t Template) Rules(path string) []string { return t.rules(path) }
+
 // Readme renders the template's README.md.
 func (t Template) Readme(path string) string {
 	return renderReadme(t, path)
