@@ -1,0 +1,102 @@
+{
+  "protocol": "interlock.spec.v1",
+  "policy_id": "repository-policy.v1",
+  "actors": [
+    "agent",
+    "sdk-generator"
+  ],
+  "resources": [
+    {
+      "id": "generated",
+      "kind": "tree",
+      "uri": "repo://generated/**"
+    },
+    {
+      "id": "main",
+      "kind": "branch",
+      "uri": "repo://branch/main"
+    },
+    {
+      "id": "source",
+      "kind": "tree",
+      "uri": "repo://src/**"
+    }
+  ],
+  "rules": [
+    {
+      "id": "agent-source",
+      "effect": "allow",
+      "actor": "agent",
+      "operations": [
+        "filesystem.delete",
+        "filesystem.read",
+        "filesystem.rename_from",
+        "filesystem.rename_to",
+        "filesystem.write"
+      ],
+      "resource": "source",
+      "reason": "the agent may work freely in ordinary source code"
+    },
+    {
+      "id": "deny-agent-generated",
+      "effect": "deny",
+      "actor": "agent",
+      "operations": [
+        "filesystem.delete",
+        "filesystem.rename_to",
+        "filesystem.write"
+      ],
+      "resource": "generated",
+      "reason": "generated files must be produced by the verified SDK generator"
+    },
+    {
+      "id": "publish-generated",
+      "effect": "allow",
+      "actor": "sdk-generator",
+      "operations": [
+        "artifact.publish"
+      ],
+      "resource": "generated",
+      "requires": [
+        {
+          "kind": "policy_hash_match"
+        },
+        {
+          "kind": "staged_hash_match"
+        },
+        {
+          "kind": "receipt_status",
+          "receipt": "sdk-tests",
+          "status": "passed"
+        }
+      ],
+      "reason": "the verified generator may publish generated files on passing tests"
+    },
+    {
+      "id": "deny-force-push-main",
+      "effect": "deny",
+      "actor": "agent",
+      "operations": [
+        "vcs.force_push"
+      ],
+      "resource": "main",
+      "reason": "force-pushing the protected branch is not permitted"
+    },
+    {
+      "id": "push-main",
+      "effect": "allow",
+      "actor": "agent",
+      "operations": [
+        "vcs.push"
+      ],
+      "resource": "main",
+      "requires": [
+        {
+          "kind": "human_approval",
+          "approval": "release-main"
+        }
+      ],
+      "reason": "pushing the protected branch requires human approval"
+    }
+  ]
+}

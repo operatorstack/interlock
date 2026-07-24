@@ -34,6 +34,16 @@ type HashRecord struct {
 	ExpectedHash string `json:"expected_hash"`
 }
 
+// SpecRecord freezes one policy's interlock.spec.v1 authoring input: the
+// on-corpus path to its spec.v1 document and the hash it must compile to. It is
+// the cross-language parity manifest — every non-Go frontend reads the spec.v1,
+// canonicalizes, and must reproduce ExpectedHash.
+type SpecRecord struct {
+	Name         string `json:"name"`
+	Spec         string `json:"spec"`
+	ExpectedHash string `json:"expected_hash"`
+}
+
 // EnvelopeSpec is a frozen upstream-evidence envelope description. Bind controls
 // how the compat test binds artifact_sha256 to the staged bytes.
 type EnvelopeSpec struct {
@@ -82,6 +92,20 @@ func Hashes(version string) ([]HashRecord, error) {
 	var out []HashRecord
 	err := readJSONL(version+"/hashes.jsonl", func(b []byte) error {
 		var r HashRecord
+		if err := json.Unmarshal(b, &r); err != nil {
+			return err
+		}
+		out = append(out, r)
+		return nil
+	})
+	return out, err
+}
+
+// Specs loads the frozen spec.v1 parity records for a version.
+func Specs(version string) ([]SpecRecord, error) {
+	var out []SpecRecord
+	err := readJSONL(version+"/specs.jsonl", func(b []byte) error {
+		var r SpecRecord
 		if err := json.Unmarshal(b, &r); err != nil {
 			return err
 		}

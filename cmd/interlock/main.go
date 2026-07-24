@@ -14,10 +14,12 @@ import (
 	"path/filepath"
 
 	"github.com/operatorstack/interlock/broker"
+	"github.com/operatorstack/interlock/compiler"
 	"github.com/operatorstack/interlock/engine"
 	"github.com/operatorstack/interlock/ir"
 	"github.com/operatorstack/interlock/protocol"
 	"github.com/operatorstack/interlock/receipt"
+	"github.com/operatorstack/interlock/spec"
 )
 
 func main() {
@@ -77,8 +79,9 @@ usage:
   interlock test [dir]                       run the policy's tests (dir defaults to .interlock)
   interlock demo [name]                       narrate a built-in policy (default repository-policy; --list)
   interlock compile <dir> [-o policy.json]   build+run a Go policy module → canonical IR
-  interlock check <policy.json>              validate canonical IR and print its hash
-  interlock explain <policy.json>            print a human-readable policy summary
+  interlock compile <spec.json> [-o out]     compile an interlock.spec.v1 doc → canonical IR (no toolchain)
+  interlock check <policy|spec.json>         validate a policy (IR or spec.v1) and print its hash
+  interlock explain <policy|spec.json>       print a human-readable policy summary
   interlock decide <policy.json> <req.json>  evaluate one effect request
   interlock publish <policy.json> <pub.json> broker a protected publish
   interlock simulate <policy.json> <reqs.jsonl> <run_id> -o <receipts.jsonl>   decide a stream → receipt chain
@@ -109,11 +112,33 @@ func cmdCompile(args []string) error {
 		}
 	}
 	if dir == "" {
-		return fmt.Errorf("compile: want <dir>")
+		return fmt.Errorf("compile: want <dir> (Go module) or <spec.json> (interlock.spec.v1)")
 	}
 	abs, err := filepath.Abs(dir)
 	if err != nil {
 		return err
+	}
+	// A regular file is a spec.v1 (or canonical policy.v1) document: compile it
+	// in-process, no Go toolchain. This is the language-neutral compile authority
+	// and the parity reference every non-Go frontend is checked against.
+	if info, statErr := os.Stat(abs); statErr == nil && !info.IsDir() {
+		raw, rerr := os.ReadFile(abs)
+		if rerr != nil {
+			return rerr
+		}
+		pol, derr := decodePolicy(raw)
+		if derr != nil {
+			return fmt.Errorf("compile: %w", derr)
+		}
+		canon, cerr := pol.CanonicalBytes()
+		if cerr != nil {
+			return cerr
+		}
+		if out == "" {
+			os.Stdout.Write(canon)
+			return nil
+		}
+		return os.WriteFile(out, canon, 0o644)
 	}
 	cmd := exec.Command("go", "run", ".")
 	cmd.Dir = abs
@@ -325,15 +350,35 @@ func cmdDoctor(args []string) error {
 
 // helpers
 
+// decodePolicy turns policy bytes into an ir.Policy, routing on the protocol tag:
+// interlock.policy.v1 is already canonical IR (passed through unchanged), while
+// interlock.spec.v1 is authoring input that is run through the real compiler —
+// the same authority Go authoring uses. This is what lets the toolchain-free
+// binary compile a spec.v1 document without `go run`, and makes spec.v1 the
+// language-neutral input every consumer (check/explain/decide/test) accepts.
 func decodePolicy(b []byte) (ir.Policy, error) {
-	var p ir.Policy
-	if err := json.Unmarshal(b, &p); err != nil {
+	var probe struct {
+		Protocol string `json:"protocol"`
+	}
+	if err := json.Unmarshal(b, &probe); err != nil {
 		return ir.Policy{}, err
 	}
-	if p.Protocol != ir.Protocol {
-		return ir.Policy{}, fmt.Errorf("unexpected protocol %q (want %q)", p.Protocol, ir.Protocol)
+	switch probe.Protocol {
+	case ir.Protocol:
+		var p ir.Policy
+		if err := json.Unmarshal(b, &p); err != nil {
+			return ir.Policy{}, err
+		}
+		return p, nil
+	case spec.Protocol:
+		s, err := spec.DecodeToSpec(b)
+		if err != nil {
+			return ir.Policy{}, err
+		}
+		return compiler.Compile(s)
+	default:
+		return ir.Policy{}, fmt.Errorf("unexpected protocol %q (want %q or %q)", probe.Protocol, spec.Protocol, ir.Protocol)
 	}
-	return p, nil
 }
 
 func loadPolicy(path string) (ir.Policy, error) {

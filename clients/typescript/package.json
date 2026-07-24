@@ -1,0 +1,26 @@
+{
+  "name": "@operatorstack/interlock",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Generated protocol types and canonical encoder for Interlock (interlock.spec.v1 / interlock.policy.v1). Data types only — enforcement stays the Go executable.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "example": "node examples/parity.ts",
+    "parity": "node examples/parity.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}

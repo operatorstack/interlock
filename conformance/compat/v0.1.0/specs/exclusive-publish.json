@@ -1,0 +1,67 @@
+{
+  "protocol": "interlock.spec.v1",
+  "policy_id": "exclusive-publish.v1",
+  "actors": [
+    "agent",
+    "publisher"
+  ],
+  "resources": [
+    {
+      "id": "artifact",
+      "kind": "file",
+      "uri": "repo://out/result.json"
+    },
+    {
+      "id": "workspace",
+      "kind": "tree",
+      "uri": "repo://work/**"
+    }
+  ],
+  "rules": [
+    {
+      "id": "agent-workspace",
+      "effect": "allow",
+      "actor": "agent",
+      "operations": [
+        "filesystem.delete",
+        "filesystem.write"
+      ],
+      "resource": "workspace",
+      "reason": "the agent may work freely in its own workspace"
+    },
+    {
+      "id": "deny-agent-artifact",
+      "effect": "deny",
+      "actor": "agent",
+      "operations": [
+        "artifact.publish",
+        "filesystem.write"
+      ],
+      "resource": "artifact",
+      "reason": "the producing agent may not touch the protected artifact"
+    },
+    {
+      "id": "allow-publisher",
+      "effect": "allow",
+      "actor": "publisher",
+      "operations": [
+        "artifact.publish"
+      ],
+      "resource": "artifact",
+      "requires": [
+        {
+          "kind": "policy_hash_match"
+        },
+        {
+          "kind": "staged_hash_match"
+        },
+        {
+          "kind": "receipt_status",
+          "receipt": "deltawire.supervision.receipt.v1",
+          "status": "released"
+        }
+      ],
+      "reason": "the verified publisher may publish a staged candidate"
+    }
+  ]
+}

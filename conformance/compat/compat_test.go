@@ -9,10 +9,12 @@ import (
 	"testing"
 
 	"github.com/operatorstack/interlock/broker"
+	"github.com/operatorstack/interlock/compiler"
 	"github.com/operatorstack/interlock/engine"
 	"github.com/operatorstack/interlock/ir"
 	"github.com/operatorstack/interlock/protocol"
 	"github.com/operatorstack/interlock/receipt"
+	"github.com/operatorstack/interlock/spec"
 )
 
 // TestCompatV010 re-derives the v0.1.0 corpus and fails with breaking-change
@@ -23,9 +25,77 @@ import (
 //   - new additive vocabulary is fine as long as this corpus stays green.
 func TestCompatV010(t *testing.T) {
 	t.Run("policy hashes", func(t *testing.T) { checkHashes(t, V010) })
+	t.Run("spec parity", func(t *testing.T) { checkSpecParity(t, V010) })
 	t.Run("decisions", func(t *testing.T) { checkDecisions(t, V010) })
 	t.Run("broker vectors", func(t *testing.T) { checkBroker(t, V010) })
 	t.Run("replay chains", func(t *testing.T) { checkReplay(t, V010) })
+}
+
+// checkSpecParity is the parity oracle for every language authoring frontend: for
+// each flagship, decode its frozen interlock.spec.v1 input, compile it through the
+// real compiler, and assert the canonical bytes are byte-identical to the frozen
+// policy.v1 file AND the hash equals the frozen expected hash. Any non-Go SDK
+// reproduces exactly this: read the spec.v1 → canonicalize → hash → must match.
+func checkSpecParity(t *testing.T, version string) {
+	records, err := Specs(version)
+	if err != nil {
+		t.Fatalf("load specs: %v", err)
+	}
+	if len(records) == 0 {
+		t.Fatal("no frozen spec parity records")
+	}
+	// Index the frozen IR files by policy name so we can compare byte-for-byte.
+	hashes, err := Hashes(version)
+	if err != nil {
+		t.Fatalf("load hashes: %v", err)
+	}
+	irFile := map[string]string{}
+	for _, h := range hashes {
+		irFile[h.Name] = h.Policy
+	}
+
+	for _, r := range records {
+		raw, err := ReadFile(version, r.Spec)
+		if err != nil {
+			t.Errorf("%s: read spec: %v", r.Name, err)
+			continue
+		}
+		s, err := spec.DecodeToSpec(raw)
+		if err != nil {
+			t.Errorf("%s: decode spec.v1: %v", r.Name, err)
+			continue
+		}
+		pol, err := compiler.Compile(s)
+		if err != nil {
+			t.Errorf("%s: compile spec.v1: %v", r.Name, err)
+			continue
+		}
+		canon, err := pol.CanonicalBytes()
+		if err != nil {
+			t.Errorf("%s: canonical: %v", r.Name, err)
+			continue
+		}
+
+		// Byte-parity with the frozen canonical IR.
+		if irRel, ok := irFile[r.Name]; ok {
+			_, frozenIR := loadPolicyFile(t, version, irRel)
+			if !bytes.Equal(canon, frozenIR) {
+				t.Errorf("PARITY FAILURE: %s spec.v1 compiles to different canonical bytes than the frozen IR\n"+
+					"  the spec.v1 authoring input must lower to exactly the frozen policy", r.Name)
+				continue
+			}
+		}
+
+		got, err := pol.Hash()
+		if err != nil {
+			t.Errorf("%s: hash: %v", r.Name, err)
+			continue
+		}
+		if got != r.ExpectedHash {
+			t.Errorf("PARITY FAILURE: %s spec.v1 hash != frozen hash\n  want %s\n  got  %s\n"+
+				"  every language frontend must reproduce this hash from this spec.v1", r.Name, r.ExpectedHash, got)
+		}
+	}
 }
 
 func loadPolicyFile(t *testing.T, version, relpath string) (ir.Policy, []byte) {
