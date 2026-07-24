@@ -2,9 +2,10 @@
 // candidate file to a final target path, but only for a request the policy
 // engine allows on truthful, broker-produced evidence. This is where the honest
 // guarantee lives: the engine decides on claims, but the broker verifies the
-// claims against reality (the actual staged bytes, the actual upstream receipts,
-// the live policy hash) before it ever touches the target. Any mismatch fails
-// closed — the target is never modified.
+// claims against reality (the actual staged bytes, durable upstream evidence
+// re-read from disk and hash-bound to those bytes, the live policy hash) before
+// it ever touches the target. Any mismatch fails closed — the target is never
+// modified. Upstream evidence is hash-bound, not authenticated; see envelope.go.
 package broker
 
 import (
@@ -19,13 +20,14 @@ import (
 	"github.com/operatorstack/interlock/receipt"
 )
 
-// UpstreamReceipt is an evidence receipt handed to the broker (e.g. a DeltaWire
-// supervision receipt). The broker correlates it by run and turns it into
-// truthful engine evidence; it does not trust the producer to have done so.
+// UpstreamReceipt points the broker at a durable evidence envelope on disk (see
+// envelope.go). The broker re-reads the envelope, verifies it correlates to the
+// run and is hash-bound to the staged bytes, and takes the receipt schema and
+// status FROM THE FILE — never from caller-supplied struct fields. This is why
+// the type carries only a Path: there is no inline status a caller could set and
+// have trusted.
 type UpstreamReceipt struct {
-	Schema string `json:"schema"`
-	Status string `json:"status"`
-	RunID  string `json:"run_id"`
+	Path string `json:"path"`
 }
 
 // PublishRequest is a request to publish a staged candidate to a target.
@@ -62,10 +64,12 @@ var ErrDenied = errors.New("interlock/broker: publish denied by policy")
 // promotes the staged file to the target. chain records the decision receipt.
 //
 // The broker builds a truthful EffectRequest: it hashes the real staged bytes,
-// stamps the live policy hash, correlates upstream receipts by run, and only
-// then calls the engine. It fails closed if the policy hash cannot be computed,
-// the staged file is unreadable, the target's prior state is not as expected, or
-// the engine returns anything other than allow.
+// stamps the live policy hash, re-reads each upstream evidence envelope from disk
+// (verifying run correlation and hash-binding to those bytes), and only then
+// calls the engine. It fails closed if the policy hash cannot be computed, the
+// staged file is unreadable, an upstream receipt lacks a durable envelope path,
+// an envelope is missing/malformed/uncorrelated/not hash-bound, the target's
+// prior state is not as expected, or the engine returns anything other than allow.
 func Publish(policy ir.Policy, req PublishRequest, chain *receipt.Chain) (Result, error) {
 	livePolicyHash, err := policy.Hash()
 	if err != nil {
@@ -85,20 +89,35 @@ func Publish(policy ir.Policy, req PublishRequest, chain *receipt.Chain) (Result
 		return Result{}, err
 	}
 
-	// Correlate upstream receipts by run and lower them to truthful evidence.
+	// Re-read each upstream evidence envelope from disk and lower it to truthful
+	// engine evidence. The schema and status come from the file, not the caller;
+	// the envelope must correlate to this run and be hash-bound to the staged bytes
+	// we just hashed. The envelope's own content hash is pinned as an audit-only
+	// evidence entry: the engine ignores unknown evidence kinds and never inspects
+	// Value, so this is committed to the receipt yet can never satisfy a rule.
 	evidence := []protocol.Evidence{
 		{Kind: ir.ReqStagedHashMatch, Value: stagedHash},
 		{Kind: ir.ReqTargetHashMatch, Value: req.ExpectedTargetHash},
 	}
 	for _, u := range req.Upstream {
-		if u.RunID != req.RunID {
-			return Result{}, fmt.Errorf("interlock/broker: upstream receipt run %q does not match request run %q", u.RunID, req.RunID)
+		if u.Path == "" {
+			return Result{}, fmt.Errorf("interlock/broker: upstream receipt requires a durable envelope path")
 		}
-		evidence = append(evidence, protocol.Evidence{
-			Kind:    ir.ReqReceiptStatus,
-			Receipt: u.Schema,
-			Status:  u.Status,
-		})
+		env, envelopeHash, eerr := readUpstreamEnvelope(u.Path, req.RunID, stagedHash)
+		if eerr != nil {
+			return Result{}, eerr
+		}
+		evidence = append(evidence,
+			protocol.Evidence{
+				Kind:    ir.ReqReceiptStatus,
+				Receipt: env.Schema,
+				Status:  env.Status,
+			},
+			protocol.Evidence{
+				Kind:  ir.RequirementKind("upstream_envelope"),
+				Value: envelopeHash,
+			},
+		)
 	}
 
 	effReq := protocol.EffectRequest{
