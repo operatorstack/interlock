@@ -1,0 +1,6 @@
+# Force LF on every platform. The conformance/compat corpus
+# (conformance/compat/v0.1.0/policies/*.json) is committed as LF-terminated
+# canonical JSON and compared byte-for-byte against in-memory canonical bytes,
+# which are always LF. Without this, Windows checks the corpus out as CRLF and
+# the byte-exact compat check reports a false "BREAKING CHANGE".
+* text=auto eol=lf
