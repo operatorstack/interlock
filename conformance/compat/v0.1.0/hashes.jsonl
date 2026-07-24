@@ -1,0 +1,4 @@
+{"name":"exclusive-publish","policy":"policies/exclusive-publish.json","expected_hash":"sha256:edf4ed0d10b1aa9c0c2a0301688b3c97e34f6c0fc78502f4303466adb4ea82b3"}
+{"name":"generated-file-protection","policy":"policies/generated-file-protection.json","expected_hash":"sha256:39906c29d55d59555fc4ffb56aa19d9ba324ec6311b52fe37bc358746f208cd3"}
+{"name":"release-manifest","policy":"policies/release-manifest.json","expected_hash":"sha256:05301d110ba57ef7bd4dc9d75ab0b0d347ff9ab7bb96192a7a6bf6bad6f89578"}
+{"name":"repository-policy","policy":"policies/repository-policy.json","expected_hash":"sha256:a34324d17a90d425091e921bd74dd0188bb2ae2ca85448f4b6906f6dff2c9303"}

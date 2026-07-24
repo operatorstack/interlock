@@ -1,0 +1,2 @@
+{"protocol":"interlock.effect.v1","request_id":"s-1","run_id":"sim","actor":"agent","operation":"filesystem.write","resource":{"kind":"file","uri":"repo://out/result.json"},"observation":{"source":"","fidelity":""}}
+{"protocol":"interlock.effect.v1","request_id":"s-2","run_id":"sim","actor":"agent","operation":"artifact.publish","resource":{"kind":"file","uri":"repo://out/result.json"},"observation":{"source":"","fidelity":""}}
