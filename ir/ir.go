@@ -241,3 +241,19 @@ func HashBytes(b []byte) string {
 	sum := sha256.Sum256(b)
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
+
+// LoadPolicy decodes canonical policy bytes and verifies the protocol tag. It
+// does not re-canonicalize: policy identity is still established by Policy.Hash
+// at decide time, so round-tripping already-canonical bytes changes no canonical
+// output. This is the exported loader every tenant needs; without it each one
+// hand-rolls the same json.Unmarshal + protocol check.
+func LoadPolicy(b []byte) (Policy, error) {
+	var p Policy
+	if err := json.Unmarshal(b, &p); err != nil {
+		return Policy{}, fmt.Errorf("interlock/ir: decode policy: %w", err)
+	}
+	if p.Protocol != Protocol {
+		return Policy{}, fmt.Errorf("interlock/ir: policy protocol %q != %q", p.Protocol, Protocol)
+	}
+	return p, nil
+}

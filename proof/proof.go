@@ -300,15 +300,20 @@ func brokerPublish(policy ir.Policy, req broker.PublishRequest) (broker.Result, 
 	return broker.Publish(policy, req, receipt.NewChain(req.RunID))
 }
 
-// writeEnvelope writes a 4-field upstream evidence envelope (the exact shape
-// broker/envelope.go re-reads) and returns its path. artifactHash must already
-// be in ir.HashBytes tagged form ("sha256:"+hex).
-func writeEnvelope(dir, name, schema, runID, status, artifactHash string) (string, error) {
-	body := fmt.Sprintf(
-		`{"schema":%q,"run_id":%q,"status":%q,"artifact_sha256":%q}`,
-		schema, runID, status, artifactHash,
-	)
-	return writeFile(dir, name, body)
+// writeEnvelope writes an upstream evidence envelope via Interlock's own exported
+// writer, which hash-binds it to the staged bytes, and returns its path. Using
+// broker.WriteUpstreamEnvelope (rather than hand-formatting the JSON) means the
+// proofs exercise the same writer tenants use and cannot drift from the reader.
+func writeEnvelope(dir, name, schema, runID, status string, staged []byte) (string, error) {
+	path := filepath.Join(dir, name)
+	if err := broker.WriteUpstreamEnvelope(path, broker.UpstreamEvidence{
+		Schema: schema,
+		RunID:  runID,
+		Status: status,
+	}, staged); err != nil {
+		return "", err
+	}
+	return path, nil
 }
 
 // --- Proof 6: broker publishes byte-exact staged content ------------------
@@ -326,7 +331,7 @@ func proofBrokerByteExact() (string, error) {
 		return "", err
 	}
 	env, err := writeEnvelope(dir, "envelope.json",
-		"deltawire.supervision.receipt.v1", "run1", "released", ir.HashBytes([]byte(content)))
+		"deltawire.supervision.receipt.v1", "run1", "released", []byte(content))
 	if err != nil {
 		return "", err
 	}
@@ -365,7 +370,7 @@ func proofStaleTargetFailsClosed() (string, error) {
 		return "", err
 	}
 	env, err := writeEnvelope(dir, "envelope.json",
-		"deltawire.supervision.receipt.v1", "run1", "released", ir.HashBytes([]byte(content)))
+		"deltawire.supervision.receipt.v1", "run1", "released", []byte(content))
 	if err != nil {
 		return "", err
 	}
@@ -401,7 +406,7 @@ func proofCrossRunEvidenceFailsClosed() (string, error) {
 	// Envelope hash-bound to the staged bytes but correlated to a DIFFERENT run —
 	// the shape of a copied receipt reused across runs.
 	env, err := writeEnvelope(dir, "envelope.json",
-		"deltawire.supervision.receipt.v1", "other-run", "released", ir.HashBytes([]byte(content)))
+		"deltawire.supervision.receipt.v1", "other-run", "released", []byte(content))
 	if err != nil {
 		return "", err
 	}
@@ -475,7 +480,7 @@ func proofSecondTenantSameBroker() (string, error) {
 
 	// This tenant's own schema/status, hash-bound to its own artifact.
 	env, err := writeEnvelope(dir, "attestation.json",
-		"release.attestation.v1", "rel-run", "approved", ir.HashBytes([]byte(content)))
+		"release.attestation.v1", "rel-run", "approved", []byte(content))
 	if err != nil {
 		return "", err
 	}
@@ -494,7 +499,7 @@ func proofSecondTenantSameBroker() (string, error) {
 	// A foreign receipt schema must fail closed even when hash-bound and
 	// run-correlated: schema is policy data, not broker-privileged.
 	badEnv, err := writeEnvelope(dir, "foreign.json",
-		"deltawire.supervision.receipt.v1", "rel-run", "released", ir.HashBytes([]byte(content)))
+		"deltawire.supervision.receipt.v1", "rel-run", "released", []byte(content))
 	if err != nil {
 		return "", err
 	}
