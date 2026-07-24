@@ -29,11 +29,14 @@ const (
 	OpRenameTo   Operation = "filesystem.rename_to"
 	OpExecute    Operation = "process.execute"
 	OpPublish    Operation = "artifact.publish"
+	OpPush       Operation = "vcs.push"
+	OpForcePush  Operation = "vcs.force_push"
 )
 
 // Operations is the closed set of V1 operations, in canonical order.
 var Operations = []Operation{
 	OpRead, OpWrite, OpDelete, OpRenameFrom, OpRenameTo, OpExecute, OpPublish,
+	OpPush, OpForcePush,
 }
 
 // ValidOperation reports whether op is a member of the V1 vocabulary.
@@ -53,15 +56,16 @@ const (
 	KindFile    ResourceKind = "file"
 	KindTree    ResourceKind = "tree"
 	KindProcess ResourceKind = "process"
+	KindBranch  ResourceKind = "branch"
 )
 
 // ResourceKinds is the closed set of V1 resource kinds, in canonical order.
-var ResourceKinds = []ResourceKind{KindFile, KindTree, KindProcess}
+var ResourceKinds = []ResourceKind{KindFile, KindTree, KindProcess, KindBranch}
 
 // ValidResourceKind reports whether k is a member of the V1 vocabulary.
 func ValidResourceKind(k ResourceKind) bool {
 	switch k {
-	case KindFile, KindTree, KindProcess:
+	case KindFile, KindTree, KindProcess, KindBranch:
 		return true
 	default:
 		return false
@@ -98,6 +102,10 @@ const (
 	ReqPolicyHashMatch RequirementKind = "policy_hash_match"
 	// ReqTargetHashMatch demands the target's prior hash equal a claim.
 	ReqTargetHashMatch RequirementKind = "target_hash_match"
+	// ReqHumanApproval demands the request carry a matching human-approval claim
+	// (identified by Requirement.Approval). Like every requirement, the engine
+	// trusts the claim; an out-of-band approver or the broker makes it truthful.
+	ReqHumanApproval RequirementKind = "human_approval"
 )
 
 // Resource is a declared, addressable capability target.
@@ -106,6 +114,8 @@ const (
 //   - kind=tree: URI is a prefix/glob; a trailing "**" or the scheme-only form
 //     "repo://" matches any URI under that scope.
 //   - kind=process: URI names an executable class.
+//   - kind=branch: URI names a specific branch ref (e.g. "repo://branch/main"),
+//     matched by exact equality — branch glob patterns are not a V1 feature.
 type Resource struct {
 	ID   string       `json:"id"`
 	Kind ResourceKind `json:"kind"`
@@ -114,9 +124,10 @@ type Resource struct {
 
 // Requirement is a single evidence predicate attached to an allow rule.
 type Requirement struct {
-	Kind    RequirementKind `json:"kind"`
-	Receipt string          `json:"receipt,omitempty"` // required receipt schema, for receipt_status
-	Status  string          `json:"status,omitempty"`  // required status value, for receipt_status
+	Kind     RequirementKind `json:"kind"`
+	Receipt  string          `json:"receipt,omitempty"`  // required receipt schema, for receipt_status
+	Status   string          `json:"status,omitempty"`   // required status value, for receipt_status
+	Approval string          `json:"approval,omitempty"` // required approval id, for human_approval
 }
 
 // Rule is one entry in the ordered decision table.

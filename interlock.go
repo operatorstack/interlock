@@ -25,6 +25,8 @@ const (
 	RenameTo   = ir.OpRenameTo
 	Execute    = ir.OpExecute
 	Publish    = ir.OpPublish
+	Push       = ir.OpPush
+	ForcePush  = ir.OpForcePush
 )
 
 // Resource-kind vocabulary.
@@ -32,6 +34,7 @@ const (
 	FileKind    = ir.KindFile
 	TreeKind    = ir.KindTree
 	ProcessKind = ir.KindProcess
+	BranchKind  = ir.KindBranch
 )
 
 // Builder accumulates a policy via fluent, typed constructors. Construction-time
@@ -67,6 +70,13 @@ func (b *Builder) Tree(id, uri string) *Builder {
 // Process declares an executable-class resource matched by exact URI.
 func (b *Builder) Process(id, uri string) *Builder {
 	b.s.Resources = append(b.s.Resources, spec.Resource{ID: id, Kind: ir.KindProcess, URI: uri})
+	return b
+}
+
+// Branch declares a branch-ref resource matched by exact URI (e.g.
+// "repo://branch/main"), the target of vcs.push / vcs.force_push operations.
+func (b *Builder) Branch(id, uri string) *Builder {
+	b.s.Resources = append(b.s.Resources, spec.Resource{ID: id, Kind: ir.KindBranch, URI: uri})
 	return b
 }
 
@@ -143,6 +153,13 @@ func PolicyHashMatch() Requirement {
 // TargetHashMatch requires the target's prior hash to match the request claim.
 func TargetHashMatch() Requirement {
 	return ir.Requirement{Kind: ir.ReqTargetHashMatch}
+}
+
+// HumanApproval requires the request to carry a human-approval claim naming the
+// given approval id (e.g. "release-main"). Absent the claim, a matching allow
+// rule yields the require outcome — fail-closed at the enforcement point.
+func HumanApproval(id string) Requirement {
+	return ir.Requirement{Kind: ir.ReqHumanApproval, Approval: id}
 }
 
 // Spec returns the underlying spec.Spec, e.g. for source-level tests.
