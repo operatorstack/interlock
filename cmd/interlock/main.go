@@ -31,6 +31,8 @@ func main() {
 	switch os.Args[1] {
 	case "init":
 		err = cmdInit(os.Args[2:])
+	case "derive":
+		err = cmdDerive(os.Args[2:])
 	case "compile":
 		err = cmdCompile(os.Args[2:])
 	case "check":
@@ -76,6 +78,7 @@ usage:
   interlock init                             set up a no-toolchain JSON policy (interactive)
   interlock init --authoring json [dir]      set up a JSON policy (dir defaults to .interlock)
   interlock init --authoring go <dir>        scaffold a programmable Go policy module
+  interlock derive [repo] [--from PATH] [--output DIR] [--review]   draft a candidate policy from a repo's existing instructions (never enforces)
   interlock test [dir]                       run the policy's tests (dir defaults to .interlock)
   interlock demo [name]                       narrate a built-in policy (default repository-policy; --list)
   interlock compile <dir> [-o policy.json]   build+run a Go policy module → canonical IR
