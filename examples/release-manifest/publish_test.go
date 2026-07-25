@@ -47,14 +47,13 @@ func TestReleaseManifestPublishesViaFacade(t *testing.T) {
 	evidenceDir := filepath.Join(dir, "evidence")
 
 	res, err := publish.Publish(publish.Request{
-		Policy:      policy,
-		RunID:       "rel-run",
-		RequestID:   "rel-1",
-		Actor:       "release-bot",
-		ResourceURI: "repo://dist/release-manifest.json",
-		Kind:        publish.KindFile,
-		StagedPath:  staged,
-		TargetPath:  target,
+		Policy:     policy,
+		RunID:      "rel-run",
+		RequestID:  "rel-1",
+		Actor:      "release-bot",
+		ResourceID: "manifest",
+		StagedPath: staged,
+		TargetPath: target,
 		// Target must not exist yet.
 		Upstream: []publish.Evidence{{
 			Schema: ReleaseAttestationSchema,
@@ -95,14 +94,13 @@ func TestReleaseManifestForeignSchemaFailsClosed(t *testing.T) {
 	target := filepath.Join(dir, "dist", "release-manifest.json")
 
 	_, err := publish.Publish(publish.Request{
-		Policy:      policy,
-		RunID:       "rel-run",
-		RequestID:   "rel-2",
-		Actor:       "release-bot",
-		ResourceURI: "repo://dist/release-manifest.json",
-		Kind:        publish.KindFile,
-		StagedPath:  staged,
-		TargetPath:  target,
+		Policy:     policy,
+		RunID:      "rel-run",
+		RequestID:  "rel-2",
+		Actor:      "release-bot",
+		ResourceID: "manifest",
+		StagedPath: staged,
+		TargetPath: target,
 		Upstream: []publish.Evidence{{
 			// DeltaWire's schema — foreign to this tenant's policy.
 			Schema: "deltawire.supervision.receipt.v1",

@@ -65,10 +65,20 @@ type Evidence struct {
 // ultimately needs, but the tenant supplies them once, by name, instead of
 // assembling broker.PublishRequest, writing envelopes, and managing a chain.
 type Request struct {
-	Policy      Policy
-	RunID       string
-	RequestID   string
-	Actor       string
+	Policy    Policy
+	RunID     string
+	RequestID string
+	Actor     string
+
+	// ResourceID names a resource declared in Policy.Resources. When set, the
+	// façade resolves ResourceURI and Kind from that declaration, so the tenant
+	// states the resource once (in the policy) instead of restating its URI and
+	// kind here — the policy is the single source of truth the broker already
+	// re-validates against. Leave ResourceURI/Kind empty when using ResourceID;
+	// if both are given they must agree with the declaration, or the publish
+	// fails closed (no silent override of the policy).
+	ResourceID string
+
 	ResourceURI string
 	Kind        ResourceKind
 	StagedPath  string
@@ -104,6 +114,25 @@ const upstreamEnvelopeName = "interlock-upstream-envelope.json"
 // unlike a hand-rolled integration it surfaces — rather than swallows — an
 // evidence-persistence failure, since an unaudited effect must not report success.
 func Publish(req Request) (Result, error) {
+	// Resolve the resource from the policy declaration when a ResourceID is given,
+	// so the tenant does not restate URI+Kind. This reads the same policy the
+	// broker re-validates against, changes no canonical bytes, and fails closed on
+	// a missing/ambiguous ID or a conflicting explicit URI/Kind.
+	resourceURI, kind := req.ResourceURI, req.Kind
+	if req.ResourceID != "" {
+		uri, k, err := ResolveResource(req.Policy, req.ResourceID)
+		if err != nil {
+			return Result{}, err
+		}
+		if req.ResourceURI != "" && req.ResourceURI != uri {
+			return Result{}, fmt.Errorf("interlock/publish: ResourceURI %q conflicts with resource %q declared as %q", req.ResourceURI, req.ResourceID, uri)
+		}
+		if req.Kind != "" && req.Kind != k {
+			return Result{}, fmt.Errorf("interlock/publish: Kind %q conflicts with resource %q declared as %q", req.Kind, req.ResourceID, k)
+		}
+		resourceURI, kind = uri, k
+	}
+
 	staged, err := os.ReadFile(req.StagedPath)
 	if err != nil {
 		return Result{}, fmt.Errorf("interlock/publish: read staged candidate: %w", err)
@@ -131,8 +160,8 @@ func Publish(req Request) (Result, error) {
 		RunID:              req.RunID,
 		RequestID:          req.RequestID,
 		Actor:              req.Actor,
-		ResourceURI:        req.ResourceURI,
-		Kind:               req.Kind,
+		ResourceURI:        resourceURI,
+		Kind:               kind,
 		StagedPath:         req.StagedPath,
 		TargetPath:         req.TargetPath,
 		ExpectedTargetHash: req.ExpectedTargetHash,
@@ -177,6 +206,24 @@ func persistEvidence(dir string, res broker.Result, chain *receipt.Chain) error 
 		return err
 	}
 	return nil
+}
+
+// ResolveResource looks up a resource declared in the policy by its ID and
+// returns its URI and kind. It lets a tenant name a resource once — in the
+// policy — instead of restating URI+Kind at every publish call. It reads only
+// the policy (no I/O, no engine), so it never weakens the broker, which still
+// re-validates the resolved URI against the same policy at decide time.
+//
+// It fails closed: an unknown ID is an error (no default), and a duplicate ID is
+// an error rather than an arbitrary pick.
+func ResolveResource(p Policy, resourceID string) (uri string, kind ResourceKind, err error) {
+	// Delegate to the pure ir resolver so the decision-transport path can resolve
+	// resources without importing this (broker-carrying) façade package.
+	r, err := p.ResolveResource(resourceID)
+	if err != nil {
+		return "", "", err
+	}
+	return r.URI, r.Kind, nil
 }
 
 // TargetHashOf returns the current target's content hash in Interlock's tagged
