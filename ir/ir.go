@@ -122,6 +122,29 @@ type Resource struct {
 	URI  string       `json:"uri"`
 }
 
+// ResolveResource returns the resource declared in the policy with the given ID.
+// It reads only the policy (no I/O, no engine), so callers can name a resource
+// once — in the policy — instead of restating its URI and kind at every call
+// site. It fails closed: an unknown ID is an error (no default), and a duplicate
+// ID is an error rather than an arbitrary pick.
+func (p Policy) ResolveResource(id string) (Resource, error) {
+	found := false
+	var out Resource
+	for _, r := range p.Resources {
+		if r.ID != id {
+			continue
+		}
+		if found {
+			return Resource{}, fmt.Errorf("interlock/ir: resource id %q is declared more than once in policy %q", id, p.PolicyID)
+		}
+		out, found = r, true
+	}
+	if !found {
+		return Resource{}, fmt.Errorf("interlock/ir: resource id %q not declared in policy %q", id, p.PolicyID)
+	}
+	return out, nil
+}
+
 // Requirement is a single evidence predicate attached to an allow rule.
 type Requirement struct {
 	Kind     RequirementKind `json:"kind"`
