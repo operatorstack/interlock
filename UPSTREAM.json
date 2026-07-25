@@ -78,6 +78,10 @@
     "derive/review.go": "59349539a8dbb8664b89b0f2a3cabc50da03e3975727ccae36bda70d3968f704",
     "derive/schema.go": "4d10bca81110512a10aaf6306d5a5a2ebc4193058b4500cd92022a99b42d4f1e",
     "doc.go": "ffda943422fc0104acff178f17f096df5d9d0e9065e598aa0d817c457edfb198",
+    "e2e/coverage_test.go": "1240b8a56703d3c2b2492ef63049dc4573b769c444549cd693b178c06d3ab136",
+    "e2e/e2e_test.go": "28a8d8c7aa3dfa327b615c00454a438264e2b898abc84fe5c0efb9be0a2fdf3f",
+    "e2e/isolation_test.go": "9498039e244184c8ce2460742af70dd93af9e5eada183119344f2d4d5df222e2",
+    "e2e/parity_test.go": "e44628e98eeee1285a5722ed0ed5193e1c6d927d75eb87f90d3f524d83e65a7a",
     "emitspec_test.go": "b669fc73361f275311221ac450008963885801742fe14d47b12e61e677b67545",
     "engine/engine.go": "8ee1d012bbf9661288507056c7a015ab9d46fb16e9596d4717b38f15af748b8f",
     "engine/engine_test.go": "0291ca081684cd744dec98089a383e1a52093f1c5125a88623dab06d504f73a8",
@@ -112,7 +116,7 @@
   "generator": "operatorstack/interlock:project-upstream",
   "schema_version": 1,
   "source": {
-    "commit": "59ec27984383d0c956b8b6bc0ec26465d5cdd952",
+    "commit": "4006eba0241ef7c9e0df634d083be7f2888e6fdb",
     "path": "labs/21-interlock",
     "repository": "operatorstack/intelligence-flow"
   }
