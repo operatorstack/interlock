@@ -1,124 +1,85 @@
 #!/bin/sh
-# Interlock installer (macOS / Linux) — no Go toolchain required.
+# interlock installer — rendered by distribution/render.mjs, do not edit by hand.
 #
-#   curl -fsSL https://raw.githubusercontent.com/operatorstack/interlock/main/install.sh | sh
+#   curl -fsSL https://get.operatorstack.systems/interlock | sh
 #
-# It detects your OS/arch, downloads a pinned prebuilt release, verifies the
-# SHA-256 checksum, installs the `interlock` binary, then runs `interlock doctor`
-# and the repository-policy demo. It fails closed on a checksum mismatch.
+# Toolchain-free: downloads a prebuilt, checksum-verified binary from OperatorStack's
+# GCP Artifact Registry, fronted by get.operatorstack.systems. All-GCP, no GitHub Releases, no npm.
 #
-# Environment overrides:
-#   INTERLOCK_VERSION      release tag to install (default: latest)
-#   INTERLOCK_INSTALL_DIR  install directory (default: /usr/local/bin, else ~/.local/bin)
+# Env overrides:
+#   INTERLOCK_VERSION       pin an exact version (e.g. v0.3.1); default: latest channel
+#   INTERLOCK_INSTALL_DIR   install location; default: /usr/local/bin or ~/.local/bin
 set -eu
 
-REPO="operatorstack/interlock"
 BINARY="interlock"
+GET_HOST="get.operatorstack.systems"
+SMOKE_CMD="doctor"
+VERSION="${INTERLOCK_VERSION:-}"
+INSTALL_DIR="${INTERLOCK_INSTALL_DIR:-}"
 
-info() { printf 'interlock-install: %s\n' "$1" >&2; }
-die() { printf 'interlock-install: error: %s\n' "$1" >&2; exit 1; }
+say()  { printf '  %s\n' "$1"; }
+die()  { printf 'error: %s\n' "$1" >&2; exit 1; }
+have() { command -v "$1" >/dev/null 2>&1; }
 
-need() { command -v "$1" >/dev/null 2>&1 || die "required tool not found: $1"; }
-
-# --- detect platform ------------------------------------------------------
-os=$(uname -s)
-case "$os" in
-  Linux) os=linux ;;
-  Darwin) os=darwin ;;
-  *) die "unsupported OS: $os (Windows: use install.ps1)" ;;
-esac
-
+# --- resolve OS/arch -----------------------------------------------------------
+os=$(uname -s | tr '[:upper:]' '[:lower:]')
 arch=$(uname -m)
+case "$os" in
+  linux|darwin) ;;
+  *) die "unsupported OS: $os (use install.ps1 on Windows)";;
+esac
 case "$arch" in
-  x86_64 | amd64) arch=amd64 ;;
-  arm64 | aarch64) arch=arm64 ;;
-  *) die "unsupported architecture: $arch" ;;
+  x86_64|amd64) arch=amd64;;
+  arm64|aarch64) arch=arm64;;
+  *) die "unsupported architecture: $arch";;
 esac
 
-need uname
-need tar
-if command -v curl >/dev/null 2>&1; then
-  dl() { curl -fsSL "$1" -o "$2"; }
-  fetch() { curl -fsSL "$1"; }
-elif command -v wget >/dev/null 2>&1; then
-  dl() { wget -qO "$2" "$1"; }
-  fetch() { wget -qO - "$1"; }
-else
-  die "need curl or wget"
+# --- downloader ----------------------------------------------------------------
+if have curl; then dl() { curl -fsSL "$1"; }; dlf() { curl -fsSL "$1" -o "$2"; }
+elif have wget; then dl() { wget -qO- "$1"; }; dlf() { wget -qO "$2" "$1"; }
+else die "need curl or wget"; fi
+
+# --- resolve version (latest channel unless pinned) ----------------------------
+if [ -z "$VERSION" ]; then
+  VERSION=$(dl "https://${GET_HOST}/${BINARY}/latest" | sed -n 's/.*"version"[ ]*:[ ]*"\([^"]*\)".*/\1/p')
+  [ -n "$VERSION" ] || die "could not resolve latest version from https://${GET_HOST}/${BINARY}/latest"
 fi
+say "installing ${BINARY} ${VERSION} (${os}/${arch})"
 
-# sha256 tool differs across platforms.
-if command -v sha256sum >/dev/null 2>&1; then
-  sha256() { sha256sum "$1" | awk '{print $1}'; }
-elif command -v shasum >/dev/null 2>&1; then
-  sha256() { shasum -a 256 "$1" | awk '{print $1}'; }
-else
-  die "need sha256sum or shasum"
-fi
-
-# --- resolve version ------------------------------------------------------
-version="${INTERLOCK_VERSION:-}"
-if [ -z "$version" ]; then
-  info "resolving latest release"
-  version=$(fetch "https://api.github.com/repos/${REPO}/releases/latest" \
-    | grep '"tag_name":' | head -n1 | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')
-  [ -n "$version" ] || die "could not resolve latest release tag"
-fi
-info "installing ${BINARY} ${version} (${os}/${arch})"
-
-archive="${BINARY}_${version}_${os}_${arch}.tar.gz"
-base="https://github.com/${REPO}/releases/download/${version}"
-
-# --- download + verify ----------------------------------------------------
+# --- download + checksum-verify ------------------------------------------------
 tmp=$(mktemp -d)
-trap 'rm -rf "$tmp"' EXIT INT TERM
+trap 'rm -rf "$tmp"' EXIT
+archive="${BINARY}_${VERSION}_${os}_${arch}.tar.gz"
+base="https://${GET_HOST}/${BINARY}/dl/${VERSION}"
+dlf "${base}/${archive}" "${tmp}/${archive}" || die "download failed: ${base}/${archive}"
+dlf "${base}/checksums.txt" "${tmp}/checksums.txt" || die "checksums download failed"
 
-dl "${base}/${archive}" "${tmp}/${archive}" || die "downloading ${archive}"
-dl "${base}/checksums.txt" "${tmp}/checksums.txt" || die "downloading checksums.txt"
+want=$(grep " ${archive}\$" "${tmp}/checksums.txt" | awk '{print $1}')
+[ -n "$want" ] || die "no checksum listed for ${archive}"
+if have sha256sum; then got=$(sha256sum "${tmp}/${archive}" | awk '{print $1}')
+elif have shasum; then got=$(shasum -a 256 "${tmp}/${archive}" | awk '{print $1}')
+else die "need sha256sum or shasum"; fi
+[ "$want" = "$got" ] || die "checksum mismatch (expected $want, got $got) — refusing to install"
+say "checksum verified"
 
-want=$(grep " ${archive}\$" "${tmp}/checksums.txt" | awk '{print $1}' | head -n1)
-[ -n "$want" ] || die "no checksum for ${archive} in checksums.txt"
-got=$(sha256 "${tmp}/${archive}")
-if [ "$want" != "$got" ]; then
-  die "checksum mismatch for ${archive} (want ${want}, got ${got})"
-fi
-info "checksum verified"
-
-tar -xzf "${tmp}/${archive}" -C "$tmp"
-[ -f "${tmp}/${BINARY}" ] || die "archive did not contain ${BINARY}"
+# --- extract + install ---------------------------------------------------------
+tar -xzf "${tmp}/${archive}" -C "$tmp" || die "extract failed"
+[ -f "${tmp}/${BINARY}" ] || die "binary ${BINARY} not found in archive"
 chmod +x "${tmp}/${BINARY}"
 
-# --- install --------------------------------------------------------------
-dir="${INTERLOCK_INSTALL_DIR:-}"
-if [ -z "$dir" ]; then
-  if [ -w /usr/local/bin ] 2>/dev/null || { [ "$(id -u)" = 0 ] && [ -d /usr/local/bin ]; }; then
-    dir=/usr/local/bin
-  else
-    dir="${HOME}/.local/bin"
-  fi
+if [ -z "$INSTALL_DIR" ]; then
+  if [ -w /usr/local/bin ] 2>/dev/null; then INSTALL_DIR=/usr/local/bin
+  elif have sudo; then INSTALL_DIR=/usr/local/bin; SUDO=sudo
+  else INSTALL_DIR="${HOME}/.local/bin"; mkdir -p "$INSTALL_DIR"; fi
 fi
-mkdir -p "$dir"
+${SUDO:-} mv "${tmp}/${BINARY}" "${INSTALL_DIR}/${BINARY}" || die "install to ${INSTALL_DIR} failed"
+say "installed to ${INSTALL_DIR}/${BINARY}"
 
-if [ -w "$dir" ]; then
-  mv "${tmp}/${BINARY}" "${dir}/${BINARY}"
-elif command -v sudo >/dev/null 2>&1; then
-  info "elevating with sudo to write ${dir}"
-  sudo mv "${tmp}/${BINARY}" "${dir}/${BINARY}"
-else
-  die "cannot write ${dir}; set INTERLOCK_INSTALL_DIR to a writable path"
+case ":$PATH:" in *":${INSTALL_DIR}:"*) ;; *) say "note: add ${INSTALL_DIR} to your PATH";; esac
+
+# --- smoke test ----------------------------------------------------------------
+if [ -n "$SMOKE_CMD" ] && have "${INSTALL_DIR}/${BINARY}"; then
+  say "running: ${BINARY} ${SMOKE_CMD}"
+  "${INSTALL_DIR}/${BINARY}" ${SMOKE_CMD} || say "(${BINARY} ${SMOKE_CMD} reported issues — see above)"
 fi
-info "installed ${dir}/${BINARY}"
-
-case ":${PATH}:" in
-  *":${dir}:"*) ;;
-  *) info "note: ${dir} is not on your PATH; add it to use \`${BINARY}\` directly" ;;
-esac
-
-# --- prove it works -------------------------------------------------------
-bin="${dir}/${BINARY}"
-echo >&2
-"$bin" doctor
-echo >&2
-"$bin" demo repository-policy
-echo >&2
-info "done — author your own policy with \`${BINARY} init\`"
+say "done. run '${BINARY} --help' to get started."
