@@ -74,14 +74,8 @@ jobs:
               --package=interlock --version="${VER}" --source="$f"
           done
 
-      - name: update latest channel manifest
-        run: |
-          set -euo pipefail
-          printf '{"version":"%s"}\n' "${GITHUB_REF_NAME#v}" > latest.json
-          gcloud artifacts generic upload \
-            --project="${{ vars.AR_PROJECT }}" --location="${{ vars.AR_LOCATION }}" \
-            --repository="${{ vars.AR_GENERIC_REPO }}" \
-            --package=interlock-channel --version=latest --source=latest.json
+      # "latest" is resolved by the get-service from the AR version list — no channel manifest
+      # (AR rejects non-semver version ids like "latest").
 
       - name: publish npm binding (@operatorstack/interlock)
         working-directory: clients/typescript
