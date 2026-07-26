@@ -3,7 +3,7 @@
     ".gitattributes": "3d38cf98dcc69b2af4941b76ed3f04e51273fdbd4fc54032e88cf3223b4b9198",
     ".goreleaser.yml": "cdb7f4f950f7e70c0052205966cb11ef7b9a0b270ff03a670deba696cf1c61b8",
     "LICENSE": "bd17d47aefaa7406616179288058001b6532881a2517254fe668d7e9c4965cfb",
-    "README.md": "77979fdd7a0781305d65bf2576cb7368ea339a640f7fab9d6d8ea4a37888e3b0",
+    "README.md": "39b4cc851a57c654132a73b84d594e61c8a568fd3aed26d86e503133dcdb84c8",
     "assets/interlock-boundary.png": "9ae73098102d0589bf1bb912af6d39df4d1465eb93e8cea5b7e982e6fa79ef51",
     "assets/interlock-boundary.svg": "0bbb5aacc90e9311aef732dc2075aa0896ec25d0789b6612a3d98922646a0f1e",
     "assets/interlock-hero.png": "a30def06d493775458455ed891f1631200a61eafa54fa53d64474a3d340e2757",
@@ -78,6 +78,7 @@
     "derive/review.go": "59349539a8dbb8664b89b0f2a3cabc50da03e3975727ccae36bda70d3968f704",
     "derive/schema.go": "4d10bca81110512a10aaf6306d5a5a2ebc4193058b4500cd92022a99b42d4f1e",
     "doc.go": "ffda943422fc0104acff178f17f096df5d9d0e9065e598aa0d817c457edfb198",
+    "docs/concepts/enforcement-model.md": "998939bdf003cc0e192fe68ca30d29e5ad76d4682bfeb14d582d40c478dec15d",
     "e2e/coverage_test.go": "1240b8a56703d3c2b2492ef63049dc4573b769c444549cd693b178c06d3ab136",
     "e2e/e2e_test.go": "28a8d8c7aa3dfa327b615c00454a438264e2b898abc84fe5c0efb9be0a2fdf3f",
     "e2e/isolation_test.go": "9498039e244184c8ce2460742af70dd93af9e5eada183119344f2d4d5df222e2",
@@ -116,7 +117,7 @@
   "generator": "operatorstack/interlock:project-upstream",
   "schema_version": 1,
   "source": {
-    "commit": "4006eba0241ef7c9e0df634d083be7f2888e6fdb",
+    "commit": "15a45d5d730690e825b3c9cf1de077ec876a0c2b",
     "path": "labs/21-interlock",
     "repository": "operatorstack/intelligence-flow"
   }
