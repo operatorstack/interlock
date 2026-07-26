@@ -48,6 +48,10 @@ jobs:
         with:
           version: "~> v2"
           args: release --clean
+        env:
+          # goreleaser's changelog (use: github) calls the compare API even when the GitHub
+          # release is disabled; without a token it 401s. contents:read is enough.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: attest build provenance
         uses: actions/attest-build-provenance@v2
