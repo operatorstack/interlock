@@ -1,96 +1,53 @@
-<#
-.SYNOPSIS
-  Interlock installer (Windows) — no Go toolchain required.
+# interlock installer (Windows) — rendered by distribution/render.mjs, do not edit by hand.
+#
+#   irm https://get.operatorstack.systems/interlock/install.ps1 | iex
+#
+# Toolchain-free: downloads a prebuilt, checksum-verified binary from OperatorStack's
+# GCP Artifact Registry, fronted by get.operatorstack.systems. All-GCP.
+#
+# Env overrides: INTERLOCK_VERSION (pin), INTERLOCK_INSTALL_DIR (location).
+$ErrorActionPreference = "Stop"
 
-.DESCRIPTION
-  Downloads a pinned prebuilt release, verifies its SHA-256 checksum, installs
-  interlock.exe, adds the install directory to the user PATH, then runs
-  `interlock doctor` and the repository-policy demo. Fails closed on a checksum
-  mismatch.
+$binary  = "interlock"
+$getHost = "get.operatorstack.systems"
+$version = [Environment]::GetEnvironmentVariable("INTERLOCK_VERSION")
+$dir     = [Environment]::GetEnvironmentVariable("INTERLOCK_INSTALL_DIR")
 
-    irm https://raw.githubusercontent.com/operatorstack/interlock/main/install.ps1 | iex
+$arch = if ([Environment]::Is64BitOperatingSystem) { "amd64" } else { throw "unsupported architecture" }
 
-.PARAMETER Version
-  Release tag to install. Defaults to $env:INTERLOCK_VERSION, else latest.
-.PARAMETER InstallDir
-  Install directory. Defaults to $env:INTERLOCK_INSTALL_DIR, else
-  %LOCALAPPDATA%\interlock\bin.
-#>
-[CmdletBinding()]
-param(
-  [string]$Version = $env:INTERLOCK_VERSION,
-  [string]$InstallDir = $env:INTERLOCK_INSTALL_DIR
-)
-
-$ErrorActionPreference = 'Stop'
-$Repo = 'operatorstack/interlock'
-$Binary = 'interlock'
-
-function Info($m) { Write-Host "interlock-install: $m" }
-
-# --- detect arch (Windows amd64 only) ------------------------------------
-$arch = switch ($env:PROCESSOR_ARCHITECTURE) {
-  'AMD64' { 'amd64' }
-  default { throw "unsupported architecture: $($env:PROCESSOR_ARCHITECTURE) (only windows/amd64 is published)" }
+if (-not $version) {
+  $latest = Invoke-RestMethod -Uri "https://$getHost/$binary/latest"
+  $version = $latest.version
+  if (-not $version) { throw "could not resolve latest version" }
 }
-$os = 'windows'
+Write-Host "  installing $binary $version (windows/$arch)"
 
-# --- resolve version ------------------------------------------------------
-if ([string]::IsNullOrEmpty($Version)) {
-  Info 'resolving latest release'
-  $latest = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" -Headers @{ 'User-Agent' = 'interlock-install' }
-  $Version = $latest.tag_name
-  if ([string]::IsNullOrEmpty($Version)) { throw 'could not resolve latest release tag' }
-}
-Info "installing $Binary $Version ($os/$arch)"
-
-$archive = "${Binary}_${Version}_${os}_${arch}.zip"
-$base = "https://github.com/$Repo/releases/download/$Version"
-
-# --- download + verify ----------------------------------------------------
-$tmp = Join-Path $env:TEMP ("interlock-" + [System.Guid]::NewGuid().ToString('N'))
-New-Item -ItemType Directory -Path $tmp -Force | Out-Null
+$tmp = New-Item -ItemType Directory -Path (Join-Path $env:TEMP ([guid]::NewGuid()))
 try {
-  $archivePath = Join-Path $tmp $archive
-  $sumsPath = Join-Path $tmp 'checksums.txt'
-  Invoke-WebRequest -Uri "$base/$archive" -OutFile $archivePath -UseBasicParsing
-  Invoke-WebRequest -Uri "$base/checksums.txt" -OutFile $sumsPath -UseBasicParsing
+  $archive = "${binary}_${version}_windows_${arch}.zip"
+  $base = "https://$getHost/$binary/dl/$version"
+  Invoke-WebRequest -Uri "$base/$archive" -OutFile (Join-Path $tmp $archive)
+  Invoke-WebRequest -Uri "$base/checksums.txt" -OutFile (Join-Path $tmp "checksums.txt")
 
-  $want = (Select-String -Path $sumsPath -Pattern ([regex]::Escape($archive)) |
-    Select-Object -First 1).Line -split '\s+' | Select-Object -First 1
-  if ([string]::IsNullOrEmpty($want)) { throw "no checksum for $archive in checksums.txt" }
-  $got = (Get-FileHash -Path $archivePath -Algorithm SHA256).Hash.ToLower()
-  if ($want.ToLower() -ne $got) { throw "checksum mismatch for $archive (want $want, got $got)" }
-  Info 'checksum verified'
+  $want = (Select-String -Path (Join-Path $tmp "checksums.txt") -Pattern ([regex]::Escape($archive)) |
+           ForEach-Object { ($_ -split '\s+')[0] } | Select-Object -First 1)
+  if (-not $want) { throw "no checksum listed for $archive" }
+  $got = (Get-FileHash -Algorithm SHA256 -Path (Join-Path $tmp $archive)).Hash.ToLower()
+  if ($want.ToLower() -ne $got) { throw "checksum mismatch — refusing to install" }
+  Write-Host "  checksum verified"
 
-  # --- install ------------------------------------------------------------
-  if ([string]::IsNullOrEmpty($InstallDir)) {
-    $InstallDir = Join-Path $env:LOCALAPPDATA 'interlock\bin'
+  Expand-Archive -Path (Join-Path $tmp $archive) -DestinationPath $tmp -Force
+  if (-not $dir) { $dir = Join-Path $env:LOCALAPPDATA "$binary\bin" }
+  New-Item -ItemType Directory -Force -Path $dir | Out-Null
+  Move-Item -Force -Path (Join-Path $tmp "$binary.exe") -Destination (Join-Path $dir "$binary.exe")
+  Write-Host "  installed to $dir\$binary.exe"
+
+  $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+  if ($userPath -notlike "*$dir*") {
+    [Environment]::SetEnvironmentVariable("Path", "$userPath;$dir", "User")
+    Write-Host "  added $dir to your PATH (restart your shell)"
   }
-  New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
-  Expand-Archive -Path $archivePath -DestinationPath $tmp -Force
-  $exe = Join-Path $tmp "$Binary.exe"
-  if (-not (Test-Path $exe)) { throw "archive did not contain $Binary.exe" }
-  Copy-Item -Path $exe -Destination (Join-Path $InstallDir "$Binary.exe") -Force
-  Info "installed $InstallDir\$Binary.exe"
-
-  # add to user PATH if missing
-  $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
-  if (($userPath -split ';') -notcontains $InstallDir) {
-    [Environment]::SetEnvironmentVariable('Path', "$userPath;$InstallDir", 'User')
-    $env:Path = "$env:Path;$InstallDir"
-    Info "added $InstallDir to your user PATH (restart your shell to pick it up)"
-  }
-
-  # --- prove it works -----------------------------------------------------
-  $bin = Join-Path $InstallDir "$Binary.exe"
-  Write-Host ''
-  & $bin doctor
-  Write-Host ''
-  & $bin demo repository-policy
-  Write-Host ''
-  Info "done — author your own policy with '$Binary init'"
+  & (Join-Path $dir "$binary.exe") doctor
+  Write-Host "  done. run '$binary --help' to get started."
 }
-finally {
-  Remove-Item -Path $tmp -Recurse -Force -ErrorAction SilentlyContinue
-}
+finally { Remove-Item -Recurse -Force $tmp }

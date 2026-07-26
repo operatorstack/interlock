@@ -60,23 +60,11 @@ sboms:
   - id: archive
     artifacts: archive
 
+# Binaries are published to GCP Artifact Registry (the generic `dist` repo) by the
+# release workflow (gcloud artifacts generic upload), fronted by get.operatorstack.systems.
+# GoReleaser only builds + checksums + SBOMs; it does NOT create a GitHub Release.
 release:
-  github:
-    owner: operatorstack
-    name: interlock
-  # v0.1.0 is the first release; treat a missing prior tag gracefully.
-  mode: replace
-  footer: |
-    ## Protocol versions
-
-    | Contract | Version |
-    | --- | --- |
-    | policy protocol | `interlock.policy.v1` |
-    | effect protocol | `interlock.effect.v1` |
-    | receipt schema | `interlock.receipt.v1` |
-
-    Verify a downloaded archive against `checksums.txt`, and verify build
-    provenance with `gh attestation verify <archive> --repo operatorstack/interlock`.
+  disable: true
 
 changelog:
   use: github

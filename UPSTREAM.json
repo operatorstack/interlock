@@ -1,7 +1,7 @@
 {
   "files": {
     ".gitattributes": "3d38cf98dcc69b2af4941b76ed3f04e51273fdbd4fc54032e88cf3223b4b9198",
-    ".goreleaser.yml": "cdb7f4f950f7e70c0052205966cb11ef7b9a0b270ff03a670deba696cf1c61b8",
+    ".goreleaser.yml": "ad08b869ad32652522cef430ba556a86d09a43ea53b5a3935425204dcedb8b33",
     "LICENSE": "bd17d47aefaa7406616179288058001b6532881a2517254fe668d7e9c4965cfb",
     "README.md": "39b4cc851a57c654132a73b84d594e61c8a568fd3aed26d86e503133dcdb84c8",
     "assets/interlock-boundary.png": "9ae73098102d0589bf1bb912af6d39df4d1465eb93e8cea5b7e982e6fa79ef51",
@@ -27,7 +27,7 @@
     "clients/schema/interlock.schema.json": "b637af7ab11b324f9b018656942552858143b412e5083d18285abadc6d056eba",
     "clients/typescript/examples/decision-request.ts": "0a398c305f1fc89b7d0c70c68e34f56c170ba0ee456e0447103c0419c50ad159",
     "clients/typescript/examples/parity.ts": "2d73ad5d3c9f2b87bf3755fd029f449afcfcc3dd820877f02ae516228196a1b1",
-    "clients/typescript/package.json": "d6b747a44a20a2377274e7f5cc12bf292fdec10f60fb7c099a17e3b3bd6f0837",
+    "clients/typescript/package.json": "91cf220bb3aa4e02c426231d04b32207f5ba10cd92d07812e67f16073690e3bb",
     "clients/typescript/src/canonical.ts": "be376928b4563f998a5879201a9cc36407b9c13218ed6357722424e044d1247b",
     "clients/typescript/src/index.ts": "b7ccd06a0bfb6e938ff88746ba48b3179b1b855ab6523e9f749658ad514e9728",
     "clients/typescript/src/protocol.ts": "a5413e22897330135591f8c44a24eb64cdbfea7762f3f1d2e0866e1424ece145",
@@ -92,8 +92,8 @@
     "examples/release-manifest/publish_test.go": "7594fc7ff5a2abaf3216c74879c8d5873b636f8091d532c39d93971a276f4f4c",
     "examples/repository-policy/policy.go": "8c7fe12c487c1369d5ce8ae24e647e050557cd2bf29c56d4010b782603debbd1",
     "go.mod": "a9a846b064eac2e330c18198dae19044e438bff31dcb26d928cdb2f9b5cae3e1",
-    "install.ps1": "ada3f94562569929446dd6ca200f993854fa10081785e3ad1a09db285dacca6a",
-    "install.sh": "7d62cccc9b35280490c3332279743050957ab7e648b4b115c86211ba8995ab4e",
+    "install.ps1": "675ffcba0a61ae3cfd87c821ccb13e310a4b96d56272db6167e2b75efb4fdaf3",
+    "install.sh": "c322f7b8d532d63aa6a2fc1953e972eb7952d7c40ee925db2146aab37deeb3e2",
     "interlock.go": "de4ff7ee8dd15ab12d0bea387b66ad6e7abfbb66553839ecc0befc32ec8fb606",
     "interlock_test.go": "06b56780f7ae90fe12b055bf426aab8b87ed4fe174698a49d729bdc6484299e2",
     "ir/ir.go": "8765290a06278981beff40410092c63e0df3b1561e4cbd7e6c63217f1213390d",
@@ -117,7 +117,7 @@
   "generator": "operatorstack/interlock:project-upstream",
   "schema_version": 1,
   "source": {
-    "commit": "15a45d5d730690e825b3c9cf1de077ec876a0c2b",
+    "commit": "0c891b5d90548ec81d5f1bafe9dd63e06a5df2b2",
     "path": "labs/21-interlock",
     "repository": "operatorstack/intelligence-flow"
   }
