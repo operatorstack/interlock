@@ -274,6 +274,9 @@ the compiled policy allows on truthful evidence.** Remove isolation or the broke
 and Interlock makes no claim about child-process writes. This honesty is enforced
 by the broker tests, not just asserted here.
 
+See [Enforcement model — transport is not authority](docs/concepts/enforcement-model.md)
+for how this guarantee holds across local, agent, and cloud-sandbox environments.
+
 ## Install
 
 **Prebuilt binary (no Go toolchain).** The installer detects your platform,
