@@ -22,6 +22,33 @@ const (
 	pyClientPkg    = "interlock-protocol"
 )
 
+// compatibleSDKVersion is the typed-client version this CLI is protocol-compatible
+// with. Binary and SDK ship from one tag, so "compatible" is simply "same release".
+// A dev/un-stamped build pins nothing (installs latest) so local checkouts work.
+func compatibleSDKVersion() string {
+	v := releaseVersion()
+	if v == "dev" || v == "" {
+		return ""
+	}
+	return v
+}
+
+// npmClientSpec / pyClientSpec pin the install to the compatible version, preventing
+// a fresh SDK from silently outrunning the CLI's protocol.
+func npmClientSpec() string {
+	if v := compatibleSDKVersion(); v != "" {
+		return npmClientPkg + "@" + v
+	}
+	return npmClientPkg
+}
+
+func pyClientSpec() string {
+	if v := compatibleSDKVersion(); v != "" {
+		return pyClientPkg + "==" + v
+	}
+	return pyClientPkg
+}
+
 func resolveGetHost(flag string) string {
 	if flag != "" {
 		return flag
@@ -172,13 +199,13 @@ func installNPM(dir, host string, force, configureOnly bool) error {
 	}
 	fmt.Printf("configured %s -> %s\n", npmrc, registryURL)
 	if configureOnly {
-		fmt.Printf("run: npm install %s\n", npmClientPkg)
+		fmt.Printf("run: npm install %s\n", npmClientSpec())
 		return nil
 	}
 	if _, err := exec.LookPath("npm"); err != nil {
-		return fmt.Errorf("install: npm not found on PATH (config written; run: npm install %s)", npmClientPkg)
+		return fmt.Errorf("install: npm not found on PATH (config written; run: npm install %s)", npmClientSpec())
 	}
-	return runIn(dir, "npm", "install", npmClientPkg)
+	return runIn(dir, "npm", "install", npmClientSpec())
 }
 
 func installPython(dir, host string, force, configureOnly bool) error {
@@ -195,14 +222,14 @@ func installPython(dir, host string, force, configureOnly bool) error {
 	}
 	fmt.Printf("configured %s (PIP_INDEX_URL=%s)\n", regFile, indexURL)
 	if configureOnly {
-		fmt.Printf("run: uv pip install --index-url %s %s   (or: pip install --index-url %s %s)\n", indexURL, pyClientPkg, indexURL, pyClientPkg)
+		fmt.Printf("run: uv pip install --index-url %s %s   (or: pip install --index-url %s %s)\n", indexURL, pyClientSpec(), indexURL, pyClientSpec())
 		return nil
 	}
 	if _, err := exec.LookPath("uv"); err == nil {
-		return runIn(dir, "uv", "pip", "install", "--index-url", indexURL, pyClientPkg)
+		return runIn(dir, "uv", "pip", "install", "--index-url", indexURL, pyClientSpec())
 	}
 	if _, err := exec.LookPath("pip"); err == nil {
-		return runIn(dir, "pip", "install", "--index-url", indexURL, pyClientPkg)
+		return runIn(dir, "pip", "install", "--index-url", indexURL, pyClientSpec())
 	}
 	return fmt.Errorf("install: neither uv nor pip found on PATH (config written; run with --index-url %s)", indexURL)
 }
