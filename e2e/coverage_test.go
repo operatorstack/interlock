@@ -22,6 +22,7 @@ import (
 // commands and are excluded from the dispatch set below.
 var covered = map[string]string{
 	"init":     "TestJourney_InitTestTamper",
+	"install":  "TestJourney_Install",
 	"derive":   "TestJourney_Derive",
 	"compile":  "TestJourney_Derive (promotion) + parity fixtures",
 	"check":    "TestSmoke_InfoCommands",
