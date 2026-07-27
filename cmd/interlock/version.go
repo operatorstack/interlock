@@ -33,8 +33,13 @@ func releaseVersion() string {
 // prebuilt-binary install, it reports the exact tag and commit the artifact was
 // built from, alongside the wire contracts.
 func cmdVersion(args []string) error {
-	if len(args) > 0 {
-		return fmt.Errorf("version: unexpected argument %q", args[0])
+	check := false
+	for _, a := range args {
+		if a == "--check" {
+			check = true
+			continue
+		}
+		return fmt.Errorf("version: unexpected argument %q", a)
 	}
 	fmt.Printf("interlock %s (%s)\n", releaseVersion(), buildCommit())
 	if date != "" {
@@ -43,5 +48,15 @@ func cmdVersion(args []string) error {
 	fmt.Printf("  policy protocol : %s\n", ir.Protocol)
 	fmt.Printf("  effect protocol : %s\n", protocol.EffectRequestProtocol)
 	fmt.Printf("  receipt schema  : %s\n", receipt.Schema)
+	// --check contacts the front door for a newer release; plain `version` stays offline.
+	if check {
+		if latest, err := latestVersion(resolveGetHost("")); err != nil {
+			fmt.Printf("  updates         : could not check (offline?)\n")
+		} else if upgradeAvailable(releaseVersion(), latest) {
+			fmt.Printf("  updates         : newer available %s -> %s (run: interlock upgrade)\n", releaseVersion(), latest)
+		} else {
+			fmt.Printf("  updates         : up to date (latest %s)\n", latest)
+		}
+	}
 	return nil
 }

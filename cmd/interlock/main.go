@@ -33,6 +33,8 @@ func main() {
 		err = cmdInit(os.Args[2:])
 	case "install":
 		err = cmdInstall(os.Args[2:])
+	case "upgrade":
+		err = cmdUpgrade(os.Args[2:])
 	case "derive":
 		err = cmdDerive(os.Args[2:])
 	case "compile":
@@ -81,6 +83,7 @@ usage:
   interlock init --authoring json [dir]      set up a JSON policy (dir defaults to .interlock)
   interlock init --authoring go <dir>        scaffold a programmable Go policy module
   interlock install [ts|python]              install the typed client from your registry (--configure-only writes config)
+  interlock upgrade [--check]                update interlock to the latest published version
   interlock derive [repo] [--from PATH] [--output DIR] [--review]   draft a candidate policy from a repo's existing instructions (never enforces)
   interlock test [dir]                       run the policy's tests (dir defaults to .interlock)
   interlock demo [name]                       narrate a built-in policy (default repository-policy; --list)
@@ -349,6 +352,13 @@ func cmdDoctor(args []string) error {
 		fmt.Printf("  go toolchain    : NOT FOUND (needed only for compile / init --authoring go)\n")
 	} else {
 		fmt.Printf("  go toolchain    : available\n")
+	}
+	if latest, lerr := latestVersion(resolveGetHost("")); lerr != nil {
+		fmt.Printf("  updates         : could not check (offline?)\n")
+	} else if upgradeAvailable(releaseVersion(), latest) {
+		fmt.Printf("  updates         : newer available %s -> %s (run: interlock upgrade)\n", releaseVersion(), latest)
+	} else {
+		fmt.Printf("  updates         : up to date (latest %s)\n", latest)
 	}
 	fmt.Printf("  note            : init --authoring json and test need no toolchain\n")
 	return nil

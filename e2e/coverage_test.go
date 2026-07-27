@@ -23,6 +23,7 @@ import (
 var covered = map[string]string{
 	"init":     "TestJourney_InitTestTamper",
 	"install":  "TestJourney_Install",
+	"upgrade":  "TestJourney_Upgrade",
 	"derive":   "TestJourney_Derive",
 	"compile":  "TestJourney_Derive (promotion) + parity fixtures",
 	"check":    "TestSmoke_InfoCommands",
