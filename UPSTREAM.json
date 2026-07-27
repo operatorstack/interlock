@@ -35,7 +35,8 @@
     "cmd/interlock/demo.go": "4593c47d679b455ae9800e1197f648071f4b85ec14f3a7f8b726414c91783764",
     "cmd/interlock/derive.go": "6c2eda35cdf73d61f22dd3702999390e84c945416a0f699c709bf59ad42246cc",
     "cmd/interlock/init.go": "ea4df1ba3bcf0ec2f62cf02752b39598027376096ba974b2e770b0a79dc4ba0f",
-    "cmd/interlock/main.go": "0e4088a462c74963ae5c693b3f37e11dcc9ca0ce91fdc5b39ba6fae82d14ecae",
+    "cmd/interlock/install.go": "71cdb44ec7467b0d4e8895eb8ba5d4275ff54e898b74e5d3cb4e66ee55c200ae",
+    "cmd/interlock/main.go": "5b8b0609026ffb1d3db0c23ece1a116a8d69016102f5f2be937035ffeff310ac",
     "cmd/interlock/test.go": "e9b680cde45e061155dcc375b057f8ff4e69559d5f2be7dcd15f3685af0e1079",
     "cmd/interlock/verify.go": "5613c04febf6731fd25a75e615a524d57f99cb762016f458be5243034376b025",
     "cmd/interlock/version.go": "262fedc77a86623a48ee5a52940356a399fc71466d6da52f902cd655b9d7303d",
@@ -79,8 +80,9 @@
     "derive/schema.go": "4d10bca81110512a10aaf6306d5a5a2ebc4193058b4500cd92022a99b42d4f1e",
     "doc.go": "ffda943422fc0104acff178f17f096df5d9d0e9065e598aa0d817c457edfb198",
     "docs/concepts/enforcement-model.md": "998939bdf003cc0e192fe68ca30d29e5ad76d4682bfeb14d582d40c478dec15d",
-    "e2e/coverage_test.go": "1240b8a56703d3c2b2492ef63049dc4573b769c444549cd693b178c06d3ab136",
+    "e2e/coverage_test.go": "ba0df1720714b31a5726964ba33868bd06ecadc346f12e8ee50cfd286d1d23e5",
     "e2e/e2e_test.go": "28a8d8c7aa3dfa327b615c00454a438264e2b898abc84fe5c0efb9be0a2fdf3f",
+    "e2e/install_test.go": "a0f65ec294fdc7d032045e214c1f56021f08472f44536b6365df8d66471fd67f",
     "e2e/isolation_test.go": "9498039e244184c8ce2460742af70dd93af9e5eada183119344f2d4d5df222e2",
     "e2e/parity_test.go": "e44628e98eeee1285a5722ed0ed5193e1c6d927d75eb87f90d3f524d83e65a7a",
     "emitspec_test.go": "b669fc73361f275311221ac450008963885801742fe14d47b12e61e677b67545",
@@ -117,7 +119,7 @@
   "generator": "operatorstack/interlock:project-upstream",
   "schema_version": 1,
   "source": {
-    "commit": "0c891b5d90548ec81d5f1bafe9dd63e06a5df2b2",
+    "commit": "10ef9c03b7e2d83a3564cc302c5eddf4cd8d3ce7",
     "path": "labs/21-interlock",
     "repository": "operatorstack/intelligence-flow"
   }
