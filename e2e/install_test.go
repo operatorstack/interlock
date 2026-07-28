@@ -76,3 +76,45 @@ func TestJourney_Install(t *testing.T) {
 		}
 	})
 }
+
+func TestJourney_InstallLifecycle(t *testing.T) {
+	t.Run("--revert removes the npm registry config", func(t *testing.T) {
+		dir := t.TempDir()
+		run(t, "install", "ts", "--dir", dir, "--configure-only")
+		if _, err := os.Stat(filepath.Join(dir, ".npmrc")); err != nil {
+			t.Fatalf(".npmrc not written: %v", err)
+		}
+		if _, stderr, code := run(t, "install", "ts", "--dir", dir, "--revert"); code != 0 {
+			t.Fatalf("revert failed: %s", stderr)
+		}
+		if _, err := os.Stat(filepath.Join(dir, ".npmrc")); !os.IsNotExist(err) {
+			t.Fatalf(".npmrc should be gone after revert")
+		}
+	})
+
+	t.Run("--revert removes the python registry config", func(t *testing.T) {
+		dir := t.TempDir()
+		run(t, "install", "python", "--dir", dir, "--configure-only")
+		run(t, "install", "python", "--dir", dir, "--revert")
+		if _, err := os.Stat(filepath.Join(dir, ".interlock", "registry")); !os.IsNotExist(err) {
+			t.Fatalf(".interlock/registry should be gone after revert")
+		}
+	})
+
+	t.Run("--example writes a starter, refuses overwrite without --force", func(t *testing.T) {
+		dir := t.TempDir()
+		if _, stderr, code := run(t, "install", "ts", "--dir", dir, "--example"); code != 0 {
+			t.Fatalf("example failed: %s", stderr)
+		}
+		b, err := os.ReadFile(filepath.Join(dir, "interlock-example.ts"))
+		if err != nil || !strings.Contains(string(b), "interlock.effect.v1") {
+			t.Fatalf("example not written correctly: %v", err)
+		}
+		if _, _, code := run(t, "install", "ts", "--dir", dir, "--example"); code == 0 {
+			t.Fatal("second --example without --force should fail")
+		}
+		if _, _, code := run(t, "install", "ts", "--dir", dir, "--example", "--force"); code != 0 {
+			t.Fatal("--example --force should overwrite")
+		}
+	})
+}
