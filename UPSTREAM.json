@@ -125,7 +125,7 @@
   "generator": "operatorstack/interlock:project-upstream",
   "schema_version": 1,
   "source": {
-    "commit": "c7c89a11d5f0933d6ff2d8df593b720f70f95af3",
+    "commit": "f3e44076ff395a608f025c7162627e44e795f55f",
     "path": "labs/21-interlock",
     "repository": "operatorstack/intelligence-flow"
   }
