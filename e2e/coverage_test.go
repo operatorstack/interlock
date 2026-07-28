@@ -23,6 +23,7 @@ import (
 var covered = map[string]string{
 	"init":     "TestJourney_InitTestTamper",
 	"install":  "TestJourney_Install",
+	"upgrade":  "TestJourney_Upgrade",
 	"derive":   "TestJourney_Derive",
 	"compile":  "TestJourney_Derive (promotion) + parity fixtures",
 	"check":    "TestSmoke_InfoCommands",
@@ -63,8 +64,8 @@ func TestEveryCommandHasE2E(t *testing.T) {
 	for _, m := range caseLabel.FindAllStringSubmatch(dispatch, -1) {
 		for _, q := range quoted.FindAllStringSubmatch(m[1], -1) {
 			label := q[1]
-			if strings.HasPrefix(label, "-") || label == "help" {
-				continue // alias flags and help are not commands
+			if strings.HasPrefix(label, "-") || label == "help" || strings.HasPrefix(label, "__") {
+				continue // alias flags, help, and private helper entrypoints are not public commands
 			}
 			commands[label] = true
 		}

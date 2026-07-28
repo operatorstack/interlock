@@ -82,7 +82,10 @@ func cmdInit(args []string) error {
 				"Bare `interlock init` creates the no-toolchain JSON setup.\n")
 			return initGo(positional[0])
 		}
-		return initJSON(defaultInterlockDir, template, path, force)
+		if err := initJSON(defaultInterlockDir, template, path, force); err != nil {
+			return err
+		}
+		return offerClientInstall()
 	default:
 		return fmt.Errorf("init: unknown --authoring %q (want go|json)", authoring)
 	}
@@ -194,6 +197,35 @@ func promptTemplate() (key, path string, err error) {
 
 // defaultCustomPathHint mirrors scaffold's default for the interactive prompt.
 const defaultCustomPathHint = "repo://protected/**"
+
+// offerClientInstall asks, after an interactive init, whether to install a typed
+// client. It NEVER fails init: a declined/non-interactive answer (empty stdin) or a
+// failed install just returns nil. This is the init -> optional-client-install path.
+func offerClientInstall() error {
+	fmt.Print("\nInstall a typed client for a language now? [y/N]: ")
+	line, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+	switch strings.ToLower(strings.TrimSpace(line)) {
+	case "y", "yes":
+	default:
+		return nil
+	}
+	lang, err := promptLanguage()
+	if err != nil {
+		return nil
+	}
+	host := resolveGetHost("")
+	var ierr error
+	switch normalizeLang(lang) {
+	case "ts":
+		ierr = installNPM(".", host, false, false)
+	case "python":
+		ierr = installPython(".", host, false, false)
+	}
+	if ierr != nil {
+		fmt.Printf("note: client install did not complete: %v (retry: interlock install)\n", ierr)
+	}
+	return nil
+}
 
 // initGo scaffolds a minimal, deterministic Go policy module (the programmable
 // authoring surface): arbitrary Go may run in Build(); only the emitted IR decides.

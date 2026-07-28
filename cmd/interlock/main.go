@@ -33,6 +33,10 @@ func main() {
 		err = cmdInit(os.Args[2:])
 	case "install":
 		err = cmdInstall(os.Args[2:])
+	case "upgrade":
+		err = cmdUpgrade(os.Args[2:])
+	case "__apply-upgrade":
+		err = cmdApplyUpgrade(os.Args[2:])
 	case "derive":
 		err = cmdDerive(os.Args[2:])
 	case "compile":
@@ -81,6 +85,7 @@ usage:
   interlock init --authoring json [dir]      set up a JSON policy (dir defaults to .interlock)
   interlock init --authoring go <dir>        scaffold a programmable Go policy module
   interlock install [ts|python]              install the typed client from your registry (--configure-only writes config)
+  interlock upgrade [--check]                update interlock to the latest published version
   interlock derive [repo] [--from PATH] [--output DIR] [--review]   draft a candidate policy from a repo's existing instructions (never enforces)
   interlock test [dir]                       run the policy's tests (dir defaults to .interlock)
   interlock demo [name]                       narrate a built-in policy (default repository-policy; --list)
@@ -336,21 +341,6 @@ func cmdReplay(args []string) error {
 		return err
 	}
 	fmt.Printf("ok  chain verified: %d receipts\n", len(receipts))
-	return nil
-}
-
-func cmdDoctor(args []string) error {
-	fmt.Printf("interlock doctor\n")
-	fmt.Printf("  version         : %s\n", releaseVersion())
-	fmt.Printf("  policy protocol : %s\n", ir.Protocol)
-	fmt.Printf("  effect protocol : %s\n", protocol.EffectRequestProtocol)
-	fmt.Printf("  receipt schema  : %s\n", receipt.Schema)
-	if _, err := exec.LookPath("go"); err != nil {
-		fmt.Printf("  go toolchain    : NOT FOUND (needed only for compile / init --authoring go)\n")
-	} else {
-		fmt.Printf("  go toolchain    : available\n")
-	}
-	fmt.Printf("  note            : init --authoring json and test need no toolchain\n")
 	return nil
 }
 
