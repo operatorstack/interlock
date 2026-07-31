@@ -277,6 +277,91 @@ by the broker tests, not just asserted here.
 See [Enforcement model — transport is not authority](docs/concepts/enforcement-model.md)
 for how this guarantee holds across local, agent, and cloud-sandbox environments.
 
+## Build on Interlock
+
+Two supported ways to build against Interlock, both honest about the boundary
+above: they **transport and shape** decisions; they never decide or enforce.
+
+### Language clients (TypeScript, Python)
+
+The `clients/` directory ships generated protocol types plus a hand-written,
+parity-gated canonical encoder for **TypeScript** and **Python**. They carry
+exactly three things — the wire **data types**, the **canonical encoder** that
+produces the same bytes (and therefore the same SHA-256) as the Go source, and the
+ergonomics to **shape** a request. They carry **no `decide`, no `publish`, no
+broker**: enforcement stays the trusted Go executable, and a build-time guardrail
+([`scripts/check-clients.sh`](https://github.com/operatorstack/intelligence-flow/blob/main/labs/21-interlock/scripts/check-clients.sh))
+fails the build if a client ever grows an executable decision surface.
+
+The two packages ship as **one version-locked release** — the same CI gate fails
+the build if the TypeScript and Python package versions drift, so an external
+builder can never pin mismatched clients against one controller.
+
+```bash
+# TypeScript (Node >= 22 runs .ts natively; zero runtime deps)
+cd clients/typescript && npm install
+node examples/decision-request.ts     # resolve a resource by id → typed, canonically-encoded EffectRequest
+
+# Python (>= 3.11; zero runtime deps — stdlib hashlib/json only)
+cd clients/python && pip install -e .
+python examples/decision-request.py
+```
+
+The types are **generated from the Go wire structs** (`go run ./clients/gen/main.go`)
+and diff-gated in CI, so a DTO can never silently drift from the protocol. Each
+client's canonical encoder is proven byte-for-byte against a **frozen Go corpus**
+(`conformance/compat/v0.1.0/`): the parity example re-canonicalizes every frozen
+policy and asserts the hash matches. That frozen-corpus parity is the real bar —
+"a client compiles" is not enough to ship one.
+
+What a client is *for*: hashing a policy identically across languages, and shaping
+an `EffectRequest` to send to a decision controller. What it is **not** for:
+deciding the request (that is the Go engine) or performing the effect (that is the
+Go broker). Porting either into another language is an explicit non-goal.
+
+### Run a decision over Pitot
+
+To route a decision through a running host, Interlock ships an ordinary
+[Pitot](https://github.com/operatorstack/pitot) subprocess Controller in a separate
+module ([`integrations/pitot`](integrations/pitot)) — **no Pitot source change**,
+and the interlock core never imports Pitot. Pitot launches the controller and
+streams `control.requested` events; the controller runs the pure `engine.Decide`
+and answers allow/deny, with Pitot's deadline and fail-closed
+`on_timeout`/`on_unavailable` defaults layered on top.
+
+```bash
+# the integration is its own Go module (keeps the interlock core Pitot-free)
+cd integrations/pitot && go build -o interlock-pitot-controller ./cmd/interlock-pitot-controller
+interlock compile ./examples/exclusive-publish -o policy.json
+```
+
+Register the controller under the canonical request kind `interlock.effect`, then
+issue a normal Pitot request whose `data` is an Interlock `EffectRequest`:
+
+```yaml
+controllers:
+  interlock.effect:                      # the request kind Pitot routes on
+    id: interlock-effect
+    command: [./interlock-pitot-controller, --id, interlock-effect, --policy, policy.json]
+    deadline_ms: 5000
+    on_timeout: deny
+    on_unavailable: deny
+```
+
+```bash
+pitot run --config config.yaml --runtime rt.json &
+pitot request interlock.effect --runtime rt.json --data '{"protocol":"interlock.effect.v1", ...}'
+```
+
+**One request kind, or fail closed.** Pitot routes a request to a controller by
+matching the request kind against the config key. If the client's kind and the
+config key disagree, Pitot finds no controller and denies **every** request
+silently — an engine is never consulted. Interlock keeps a single canonical value
+(`client.DefaultRequestKind = "interlock.effect"`) and a build-time drift guard
+that fails CI the moment the constant, the README, or `scripts/validate.sh` move
+apart, so a mismatch is diagnosed, never silent. This is transport plumbing, not
+the enforcement guarantee — the broker remains that.
+
 ## Install
 
 **Prebuilt binary (no Go toolchain).** The installer detects your platform,

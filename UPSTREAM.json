@@ -3,7 +3,7 @@
     ".gitattributes": "3d38cf98dcc69b2af4941b76ed3f04e51273fdbd4fc54032e88cf3223b4b9198",
     ".goreleaser.yml": "ad08b869ad32652522cef430ba556a86d09a43ea53b5a3935425204dcedb8b33",
     "LICENSE": "bd17d47aefaa7406616179288058001b6532881a2517254fe668d7e9c4965cfb",
-    "README.md": "39b4cc851a57c654132a73b84d594e61c8a568fd3aed26d86e503133dcdb84c8",
+    "README.md": "88a42ebb31047e70eddf7236ceb67c2cebfd8f8fe0a89740d4eff0a63d174d1a",
     "assets/interlock-boundary.png": "9ae73098102d0589bf1bb912af6d39df4d1465eb93e8cea5b7e982e6fa79ef51",
     "assets/interlock-boundary.svg": "0bbb5aacc90e9311aef732dc2075aa0896ec25d0789b6612a3d98922646a0f1e",
     "assets/interlock-hero.png": "a30def06d493775458455ed891f1631200a61eafa54fa53d64474a3d340e2757",
@@ -125,7 +125,7 @@
   "generator": "operatorstack/interlock:project-upstream",
   "schema_version": 1,
   "source": {
-    "commit": "44cdd76953435a74daac53faa5917bbb19deb014",
+    "commit": "dcf7cad047a1dfe1b210ee303c5cf96013cee204",
     "path": "labs/21-interlock",
     "repository": "operatorstack/intelligence-flow"
   }
